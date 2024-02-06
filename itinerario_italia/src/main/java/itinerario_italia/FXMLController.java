@@ -4,6 +4,7 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.*;
 
 import itinerario_italia.model.Città;
 import itinerario_italia.model.Model;
@@ -156,9 +157,14 @@ public class FXMLController {
     @FXML
     void calcolaItinerario(ActionEvent event) {
         try {
+        	int balneare =0; 
             // Tentativo di convertire il testo in double
             double budget = Double.parseDouble(txtBudget.getText());
             this.txtRisultato1.clear();
+            
+            if (this.checkBalneare.isSelected()) {
+                balneare =1;
+            } 
 
             // Ottenere il valore testuale dagli elementi txtOrario
             String orarioText = txtOrario.getText();
@@ -201,7 +207,15 @@ public class FXMLController {
                         try {
                             double permanenza = Double.parseDouble(permanenzaText);
                             if (permanenza <= Math.round(tempoTotale) && permanenza > 0) {
-                                this.txtRisultato1.setText("OK");
+                            	
+                            	if (!cmbCittà.getValue().equals(null)) {
+                            		LinkedList<Città> risultato  = new LinkedList(model.getCittàVertici(cmbCittà.getValue(), balneare, listaRegioni, listaZone));
+                            		this.txtRisultato1.setText("n"+ risultato.size());
+                            	}
+                            	else {
+                                    this.txtRisultato1.setText("Non hai inserito la città di partenza");
+                            	}
+         	
                             } else {
                                 this.txtRisultato1.setText("La permanenza deve essere maggiore di 0 e \nminore o uguale alla durata complessiva \ndel viaggio");
                                 this.txtRisultato1.appendText("\nDurata viaggio: " + tempoTotale);
@@ -232,15 +246,47 @@ public class FXMLController {
 
     }
 
+    private List<String> listaRegioni = new LinkedList<>();
+    private List<String> listaZone = new LinkedList<>();
+    
     @FXML
     void inviaRegione(ActionEvent event) {
-
+    	String regioneSelezionata = cmbRegione.getValue();
+        if (regioneSelezionata != null && !listaRegioni.contains(regioneSelezionata)) {
+            if (listaRegioni.isEmpty()) {
+            	listaRegioni.add(regioneSelezionata);
+            	this.txtRisultato3.setText("Stai selezionando le seguenti regioni:\n" + regioneSelezionata +"\n");
+            	if(!listaZone.isEmpty()) {
+            		listaZone.clear();
+            		cmbZona.setValue(null);
+            	}
+            }else {
+            	listaRegioni.add(regioneSelezionata);
+            	this.txtRisultato3.appendText(regioneSelezionata+"\n");
+            }
+            }
     }
 
     @FXML
     void inviaZona(ActionEvent event) {
+    	String zonaSelezionata = cmbZona.getValue();
+        if (zonaSelezionata != null && !listaZone.contains(zonaSelezionata)) {
+            if (listaZone.isEmpty()) {
+                listaZone.add(zonaSelezionata);
+            	this.txtRisultato3.setText("Stai selezionando le seguenti zone:\n" + zonaSelezionata +"\n");
+            	if(listaRegioni.isEmpty() == false) {
+            		listaRegioni.clear();
+            		cmbRegione.setValue(null);
+            	}
+            }else {
+                listaZone.add(zonaSelezionata);
+            	this.txtRisultato3.appendText(zonaSelezionata+"\n");
+            }
+        }
+        
 
     }
+
 
     @FXML
     void ricalcola(ActionEvent event) {
@@ -303,11 +349,15 @@ public class FXMLController {
     		this.cmbCittà.getItems().add(c.getNome()); 
     	}
     	
-    	this.cmbRegione.getItems().addAll(model.getRegione()); 
-    	this.cmbZona.getItems().add("Nord");
-    	this.cmbZona.getItems().add("Centro");
-    	this.cmbZona.getItems().add("Sud");
-    	this.cmbZona.getItems().add("Isole");
+    	for (String reg : model.getRegione()) {
+    	    if (!reg.equals("Sicilia") && !reg.equals("Sardegna")) {
+    	        this.cmbRegione.getItems().add(reg);
+    	    }
+    	}
+    	
+    	this.cmbZona.getItems().add("N");
+    	this.cmbZona.getItems().add("C");
+    	this.cmbZona.getItems().add("S");
     	
     	this.cmbFiltri.getItems().add("Zona");
 		this.cmbFiltri.getItems().add("Regioni");
@@ -365,6 +415,7 @@ public class FXMLController {
                 });
             }
         });
+        
         
 
 

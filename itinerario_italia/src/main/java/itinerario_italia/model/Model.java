@@ -59,31 +59,29 @@ public class Model {
 	public List<Città> getCittàVertici(String cittàPartenza, Integer balneare, List<String> listaRegioni, List<String> zone ){
 		LinkedList<Città> tutteCittà = new LinkedList<Città>(dao.getAllCittà());
 		Città cittPartenza = this.cittàIdMap.get(cittàPartenza);
-		LinkedList<Città>risultato = new LinkedList<Città>();
-		if (cittPartenza.getRegione().compareTo("Sardegna") == 0) {
-			for (Città c: tutteCittà) {
-				if (c.getRegione().compareTo("Sardegna") == 0)
-				risultato.add(c);
-			}
-
-		} else if (cittPartenza.getRegione().compareTo("Sicilia") == 0) {
-			for (Città c: tutteCittà) {
-				if (c.getRegione().compareTo("Sicilia") == 0)
-				risultato.add(c);
-			}
+		LinkedList<Città> risultato = new LinkedList<Città>();
+		if (cittPartenza.getRegione().equalsIgnoreCase("Sardegna")) {
+			risultato.addAll(this.getAllCittàRegione("Sardegna"));
+			
+		} else if (cittPartenza.getRegione().equalsIgnoreCase("Sicilia")) {
+			risultato.addAll(this.getAllCittàRegione("Sicilia"));
+			
 		} else {
 			if (listaRegioni.size()!=0) {
 				for (String reg: listaRegioni) {
-					risultato.addAll(this.getAllCittàRegione(reg)); 
+					risultato.addAll(this.getAllCittàRegione(reg));
+					
 				}
+				if (!risultato.contains(cittPartenza)) {
+						risultato.add(cittPartenza);
+					}
 				
 			}else if (zone.size()!= 0) {
-				if (risultato.isEmpty()) {
-					for (String z: zone) {
-						risultato.addAll(this.getAllCittàZona(z)); 
+				for (String z: zone) {
+					risultato.addAll(this.getAllCittàZona(z)); 
 					}
-				}else {
-					
+				if (!risultato.contains(cittPartenza)) {
+					risultato.add(cittPartenza);
 				}
 
 			}else if (balneare == 1) {
@@ -95,10 +93,18 @@ public class Model {
 							risultato.remove(c); 
 						}
 					}
+				} 
+				if (!risultato.contains(cittPartenza)) {
+					risultato.add(cittPartenza);
 				}
 				
+			} else {
+				for (String reg: dao.getAllRegioni()) {
+					if (!reg.equals("Sicilia") && !reg.equals("Sardegna")) {
+		    	        risultato.addAll(dao.getAllCittàRegione(reg));
+		    	    }
 			}
-		} 
+		} }
 			
 		return risultato; 
 	}
