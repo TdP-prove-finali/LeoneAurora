@@ -216,19 +216,20 @@ public class FXMLController {
 
                     	// Calcolare il tempo totale in giorni (senza sottrarre la permanenza)
                     	double tempoTotale = differenzaInOre / 24.0;
-                    	
+
                     	// Calcolare il tempo totale sottraendo le ore di riposo giornaliere
-                    	double tempoTotaleToltoRiposo = (differenzaInOre - (tempoTotale*8))*60;
+                    	double tempoTotaleToltoRiposoH = differenzaInOre - (tempoTotale * 8);
+                    	double tempoFinaleM = tempoTotaleToltoRiposoH*60;
                     	
-                    	
-                    	
-                    	permanenza.setMax(Math.round((tempoTotale)));
+
+                    	// Impostare il massimo per la permanenza
+                    	permanenza.setMax(Math.round(tempoTotale));
 
                         try {
                             double permanenza = Double.parseDouble(permanenzaText);
                             if (permanenza <= Math.round(tempoTotale) && permanenza > 0) {
-                            	
-                            	permanenza = (permanenza-(permanenza*8))*24*60 ;
+                                permanenza = (permanenza * 24) - (permanenza*8) ;
+                                permanenza = permanenza*60;
 
                             	if (!cmbCittà.getValue().equals(null)) {
                             		LinkedList<Città> listaVertici;
@@ -240,11 +241,12 @@ public class FXMLController {
                                     	
                                     }
  	
-                            	    Graph<Città, DefaultEdge> grafo = model.creaGrafo(listaVertici, budget, tempoTotaleToltoRiposo);
+                            	    Graph<Città, DefaultEdge> grafo = model.creaGrafo(listaVertici, budget, tempoFinaleM);
+                            	    
                             	    if (model.getNVertici(grafo)>0 && model.getNArchi(grafo)>0) {
                             	    	this.txtRisultato2.setText("Grafo creato con "+ model.getNVertici(grafo)+ "vertici e " + model.getNArchi(grafo)+"archi" );
                                         
-                            	    	List<DefaultEdge> migliorItinerario = model.trovaItinerarioOttimale(grafo, cittàPartenza, budget, tempoTotaleToltoRiposo, permanenza);
+                            	    	List<DefaultEdge> migliorItinerario = model.trovaItinerarioOttimale(grafo, cittàPartenza, budget, tempoFinaleM, permanenza);
                             	    	for (DefaultEdge arc: migliorItinerario) {
                             	    		this.txtRisultato2.appendText(arc+"\n"); 
                             	    	}

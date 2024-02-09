@@ -1,6 +1,7 @@
 package itinerario_italia.model;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -8,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
@@ -157,21 +159,22 @@ public class Model {
         Set<Città> cittàDisponibili = new HashSet<>(grafo.vertexSet());
 
         // Mappa per la memoizzazione
-        Map<Pair<Città, Double>, Set<List<DefaultEdge>>> memo = new HashMap<>();
-        int maxArchi = (int) Math.floor(durataMassima / permanenza);
+        Map<Pair<Città, Pair<Double, Double>>, Set<List<DefaultEdge>>> memo = new HashMap<>();
 
-        cercaItinerarioOttimale(grafo, cittàPartenza, cittàPartenza, itinerarioParziale, migliorItinerario, cittàDisponibili, budget, durataMassima, memo, permanenza, maxArchi);
+
+        cercaItinerarioOttimale(grafo, cittàPartenza, cittàPartenza, itinerarioParziale, migliorItinerario, cittàDisponibili, budget, durataMassima, memo, permanenza);
 
         return migliorItinerario;
     }
 
     private void cercaItinerarioOttimale(Graph<Città, DefaultEdge> grafo, Città cittàPartenza, Città cittàCorrente,
             List<DefaultEdge> itinerarioParziale, List<DefaultEdge> migliorItinerario,
-            Set<Città> cittàDisponibili, double budget, double durataMassima, Map<Pair<Città, Double>, Set<List<DefaultEdge>>> memo, double permanenza, int maxNumeroArchi) {
+            Set<Città> cittàDisponibili, double budget, double durataMassima, Map<Pair<Città, Pair<Double, Double>>, Set<List<DefaultEdge>>> memo, double permanenza) {
 
-        Pair<Città, Double> memoKey = new Pair<>(cittàCorrente, budget);
+    	Pair<Città, Pair<Double, Double>> memoKey = new Pair<>(cittàCorrente, new Pair<>(budget, durataMassima));
+    	
 
-        // Verifica se la combinazione di parametri è già stata calcolata
+    	// Verifica se la combinazione di parametri è già stata calcolata
         if (memo.containsKey(memoKey)) {
             Set<List<DefaultEdge>> cachedResults = memo.get(memoKey);
             // Verifica se l'itinerarioParziale o una sua permutazione è già presente
@@ -195,20 +198,28 @@ public class Model {
             migliorItinerario.addAll(itinerarioParziale);
             return;
         }
+        
+        List<DefaultEdge> archiOrdinati = grafo.edgesOf(cittàCorrente).stream()
+                .filter(arco -> cittàDisponibili.contains(Graphs.getOppositeVertex(grafo, arco, cittàCorrente)))
+                .sorted(Comparator.comparingDouble(arco -> pesoMap.get(arco).getCostoTot()))
+                .collect(Collectors.toList());
 
-        for (DefaultEdge arco : grafo.edgesOf(cittàCorrente)) {
+        for (DefaultEdge arco : archiOrdinati) {
             Città cittàDestinazione = Graphs.getOppositeVertex(grafo, arco, cittàCorrente);
+
 
             if (cittàDisponibili.contains(cittàDestinazione)) {
                 PesoArco peso = pesoMap.get(arco);
                 double costoArco = peso.getCostoTot();
-                double durataArco = peso.getDurata();
+                double durataArco = peso.getDurata() + permanenza;
 
                 // Verifica se l'aggiunta dell'arco rispetta i vincoli di budget e durata
-                if (costoArco <= budget && durataArco <= durataMassima && permanenza<=durataMassima) {
+                if (costoArco <= budget && durataArco <= durataMassima ) {
                     // Aggiorna i valori di budget e durata
                     double nuovoBudget = budget - costoArco;
-                    double nuovaDurataMassima = durataMassima - durataArco - permanenza;
+                    double nuovaDurataMassima = durataMassima - durataArco;
+                   
+
 
                     // Aggiungi l'arco al percorso parziale
                     itinerarioParziale.add(arco);
@@ -216,7 +227,7 @@ public class Model {
 
                     // Chiamata ricorsiva per la città di destinazione
                     cercaItinerarioOttimale(grafo, cittàPartenza, cittàDestinazione, itinerarioParziale, migliorItinerario, cittàDisponibili,
-                            nuovoBudget, nuovaDurataMassima, memo, permanenza,maxNumeroArchi);
+                            nuovoBudget, nuovaDurataMassima, memo, permanenza);
 
                     // Rimuovi l'arco dall'itinerario parziale e dalle città disponibili
                     itinerarioParziale.remove(arco);

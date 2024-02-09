@@ -14,7 +14,7 @@ public class PesoArco {
         String[] tempo = durata.split(":");
         double ore = Double.parseDouble(tempo[0]);
         double minuti = Double.parseDouble(tempo[1]);
-        return ore * 60 + minuti;
+        return (ore * 60) + minuti;
     }
 
 	public double getCostoTot() {
