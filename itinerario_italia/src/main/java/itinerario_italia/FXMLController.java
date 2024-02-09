@@ -235,9 +235,10 @@ public class FXMLController {
                             		LinkedList<Città> listaVertici;
                             		Città cittàPartenza = model.cittàIdMap.get(cmbCittà.getValue());
                             		if (this.checkBalneare.isSelected()) {
-                            			listaVertici  = new LinkedList<Città>(model.getCittàVertici(cmbCittà.getValue(), 1, listaRegioni, listaZone)); 
+                            			listaVertici  = new LinkedList<Città>(model.getCittàVertici(cmbCittà.getValue(), 1, listaRegioni, zonaScelta)); 
                                     } else {
-                                    	listaVertici  = new LinkedList<Città>(model.getCittàVertici(cmbCittà.getValue(), 0, listaRegioni, listaZone));
+                                    	listaVertici  = new LinkedList<Città>(model.getCittàVertici(cmbCittà.getValue(), 0, listaRegioni, zonaScelta));
+                     
                                     	
                                     }
  	
@@ -247,10 +248,15 @@ public class FXMLController {
                             	    	this.txtRisultato2.setText("Grafo creato con "+ model.getNVertici(grafo)+ "vertici e " + model.getNArchi(grafo)+"archi" );
                                         
                             	    	List<DefaultEdge> migliorItinerario = model.trovaItinerarioOttimale(grafo, cittàPartenza, budget, tempoFinaleM, permanenza);
-                            	    	for (DefaultEdge arc: migliorItinerario) {
-                            	    		this.txtRisultato2.appendText(arc+"\n"); 
+                            	    	if (migliorItinerario.size()>1) {
+                            	    		for (DefaultEdge arc: migliorItinerario) {
+                                	    		this.txtRisultato2.appendText(arc+"\n"); 
+                                	    	}
+                            	    	}else {                          	   
+                            	    		this.txtRisultato2.setText("Non è possibile creare un itinerario, cambia alcuni parametri!\n"
+                            	    				+ "Prova ad aumetare il budget o la durata del tuo viaggio\n"
+                            	    				+ "oppure prova a scegliere regioni più vicine alla tua città di partenza");
                             	    	}
-          
 
                             	    } else {
                             	    	this.txtRisultato2.setText("Non ci sono collegamenti disponibili per i parametri selezionati\n prova a cambiare qualche filtro!");
@@ -305,16 +311,10 @@ public class FXMLController {
     @FXML
     void eliminaZona(ActionEvent event) {
     	String zonaSelezionata = cmbZona.getValue();
-        if (zonaSelezionata != null && listaZone.contains(zonaSelezionata)) {
-            listaZone.remove(zonaSelezionata);
-            if (listaZone.isEmpty()) {
-            	this.txtRisultato3.setText("Non hai selezionato nessuna zona.");
-            }else {
-            	this.txtRisultato3.setText("Stai selezionando le seguenti zone:\n");
-            	for (String zon: listaZone) {
-                	this.txtRisultato3.appendText(zon+"\n");
-                	}
-            }
+        if (zonaSelezionata != null && zonaScelta.compareTo(zonaSelezionata) ==0) {
+            zonaScelta ="";
+            this.txtRisultato3.setText("Non hai selezionato nessuna zona.");
+
         }
 
     }
@@ -347,7 +347,7 @@ public class FXMLController {
     	this.cmbZona.setValue(null); 
     	checkBalneare.setSelected(false);
     	this.listaRegioni.clear();
-    	this.listaZone.clear();
+    	this.zonaScelta=""; 
 
     }
 
@@ -357,7 +357,7 @@ public class FXMLController {
     }
 
     private List<String> listaRegioni = new LinkedList<>();
-    private List<String> listaZone = new LinkedList<>();
+    private String zonaScelta = "";
     
     @FXML
     void inviaRegione(ActionEvent event) {
@@ -366,8 +366,8 @@ public class FXMLController {
             if (listaRegioni.isEmpty()) {
             	listaRegioni.add(regioneSelezionata);
             	this.txtRisultato3.setText("Stai selezionando le seguenti regioni:\n" + regioneSelezionata +"\n");
-            	if(!listaZone.isEmpty()) {
-            		listaZone.clear();
+            	if(!zonaScelta.isEmpty()) {
+            		zonaScelta ="";
             		cmbZona.setValue(null);
             	}
             }else {
@@ -380,18 +380,14 @@ public class FXMLController {
     @FXML
     void inviaZona(ActionEvent event) {
     	String zonaSelezionata = cmbZona.getValue();
-        if (zonaSelezionata != null && !listaZone.contains(zonaSelezionata)) {
-            if (listaZone.isEmpty()) {
-                listaZone.add(zonaSelezionata);
-            	this.txtRisultato3.setText("Stai selezionando le seguenti zone:\n" + zonaSelezionata +"\n");
-            	if(listaRegioni.isEmpty() == false) {
-            		listaRegioni.clear();
-            		cmbRegione.setValue(null);
-            	}
-            }else {
-                listaZone.add(zonaSelezionata);
-            	this.txtRisultato3.appendText(zonaSelezionata+"\n");
-            }
+        if (zonaSelezionata != null) {
+        	zonaScelta = zonaSelezionata;
+        	this.txtRisultato3.setText("Stai selezionando la seguente zona:\n" + zonaScelta);
+        	if(listaRegioni.isEmpty() == false) {
+        		listaRegioni.clear();
+        		cmbRegione.setValue(null);
+        	}
+            
         }
         
 
@@ -529,8 +525,6 @@ public class FXMLController {
                 });
             }
         });
-        
-        
 
 
     }

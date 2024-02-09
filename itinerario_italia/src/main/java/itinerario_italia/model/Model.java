@@ -63,7 +63,7 @@ public class Model {
 	    return new ArrayList<>(dao.getAllpercorsi());
 	}
 	
-	public List<Città> getCittàVertici(String cittàPartenza, Integer balneare, List<String> listaRegioni, List<String> zone) {
+	public List<Città> getCittàVertici(String cittàPartenza, Integer balneare, List<String> listaRegioni, String zonaScelta) {
 	    Città cittPartenza = this.cittàIdMap.get(cittàPartenza);
 	    LinkedList<Città> risultato = new LinkedList<>();
 
@@ -80,10 +80,9 @@ public class Model {
 	            }
 	            
 	            
-	        } else if (zone.size() != 0) {
-	            for (String z : zone) {
-	                risultato.addAll(this.getAllCittàZona(z));
-	            }
+	        } else if (!zonaScelta.isEmpty()) {
+	        	risultato.addAll(this.getAllCittàZona(zonaScelta));
+
 	            
 	        } else {
 	            for (String reg : dao.getAllRegioni()) {
