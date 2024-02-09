@@ -1,7 +1,6 @@
 package itinerario_italia.model;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -12,12 +11,10 @@ import java.util.Set;
 
 import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
-import org.jgrapht.alg.connectivity.ConnectivityInspector;
 import org.jgrapht.alg.util.Pair;
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import org.jgrapht.graph.SimpleGraph;
+
 
 import itinerario_italia.db.ItinerarioDAO;
 
@@ -40,36 +37,31 @@ public class Model {
 		}
     }
 
-	public List<Città> getCittà() {
-		LinkedList<Città> result = new LinkedList<Città>(dao.getAllCittà()); 
-		return result;
-	}
 	public List<String> getRegione() {
 		return dao.getAllRegioni() ;
 	}
 	
-	public List<Città> getAllCittàRegione(String regione){
-		LinkedList<Città> result = new LinkedList<Città>(dao.getAllCittàRegione(regione)); 
-		return result;
+	public List<Città> getCittà() {
+	    return new ArrayList<>(dao.getAllCittà());
 	}
-	
-	public List<Città> getAllCittàZona(String zona){
-		LinkedList<Città> result = new LinkedList<Città>(dao.getAllCittàZona(zona)); 
-		return result;
+
+	public List<Città> getAllCittàRegione(String regione) {
+	    return new ArrayList<>(dao.getAllCittàRegione(regione));
 	}
-	
-	public List<Città> getAllCittàBalneare(Integer balneare){
-		LinkedList<Città> result = new LinkedList<Città>(dao.getAllCittàBalneare(balneare)); 
-		return result;
+
+	public List<Città> getAllCittàZona(String zona) {
+	    return new ArrayList<>(dao.getAllCittàZona(zona));
 	}
-	
-	public List<Percorso> getAllpercorsi(){
-		LinkedList<Percorso> result = new LinkedList<Percorso>(dao.getAllpercorsi()); 
-		return result;
+
+	public List<Città> getAllCittàBalneare(Integer balneare) {
+	    return new ArrayList<>(dao.getAllCittàBalneare(balneare));
+	}
+
+	public List<Percorso> getAllpercorsi() {
+	    return new ArrayList<>(dao.getAllpercorsi());
 	}
 	
 	public List<Città> getCittàVertici(String cittàPartenza, Integer balneare, List<String> listaRegioni, List<String> zone) {
-	    LinkedList<Città> tutteCittà = new LinkedList<>(this.getCittà());
 	    Città cittPartenza = this.cittàIdMap.get(cittàPartenza);
 	    LinkedList<Città> risultato = new LinkedList<>();
 
@@ -120,57 +112,35 @@ public class Model {
 	}
 
 	
-	public Graph<Città, DefaultEdge> creaGrafo(List<Città> vertici, double budget) {
-        grafo = new SimpleGraph<>(DefaultEdge.class);
-        // Aggiungi vertici al grafo
-        for (Città città : vertici) {
-            grafo.addVertex(città);
-        }
-  
-        List<Percorso> percorsi = this.getAllpercorsi(); 
-        // Filtra i percorsi che riguardano solo città presenti nei vertici
-        List<Percorso> percorsiFiltrati = filtraPercorsi(vertici, percorsi);
-        pesoMap = new HashMap<>();
-        
-        // Aggiungi archi al grafo
-        for (Percorso percorso : percorsiFiltrati) {
-            Città cittàPartenza = cittàIdMap2.get(percorso.getId1());
-            Città cittàArrivo = cittàIdMap2.get(percorso.getId2());
-            double costoTot = percorso.getCostoTot();
-            String durata = percorso.getDurata();
-            if (costoTot <= budget) {
-            	DefaultEdge arco = grafo.addEdge(cittàPartenza, cittàArrivo);
-            	if (arco != null) {
-                	// Ottieni il peso dell'arco
-                    PesoArco pesoArco = new PesoArco(costoTot, durata);
-                    pesoMap.put(arco, pesoArco);
+	public Graph<Città, DefaultEdge> creaGrafo(List<Città> vertici, double budget, double durataTot) {
+	    grafo = new SimpleGraph<>(DefaultEdge.class);
 
-                }
-            }
-            
-        }
+	    vertici.forEach(grafo::addVertex);
 
-        return grafo;
-    }
+	    pesoMap = new HashMap<>();
+	    
+	    dao.getAllpercorsi().stream()
+	        .filter(percorso -> vertici.contains(cittàIdMap2.get(percorso.getId1())) &&
+	                            vertici.contains(cittàIdMap2.get(percorso.getId2())))
+	        .forEach(percorso -> {
+	            Città cittàPartenza = cittàIdMap2.get(percorso.getId1());
+	            Città cittàArrivo = cittàIdMap2.get(percorso.getId2());
+	            double costoTot = percorso.getCostoTot();
+	            String durata = percorso.getDurata();
+	            PesoArco pesoArco = new PesoArco(costoTot, durata);
+	            
+	            if (costoTot <= budget && pesoArco.getDurata()<=durataTot) {
+	                DefaultEdge arco = grafo.addEdge(cittàPartenza, cittàArrivo);
+	                if (arco != null) {
+	                    pesoMap.put(arco, pesoArco);
+	                }
+	            }
+	        });
 
-    private List<Percorso> filtraPercorsi(List<Città> vertici, List<Percorso> percorsi) {
-    	List<Percorso> percorsiFiltrati = new ArrayList<>();
-        for (Percorso percorso : percorsi) {
-            Città cittàPartenza = cittàIdMap2.get(percorso.getId1());
-            Città cittàArrivo = cittàIdMap2.get(percorso.getId2());
+	    return grafo;
+	}
 
-            // Controlla se entrambe le città del percorso sono presenti nei vertici
-            if (vertici.contains(cittàPartenza) && vertici.contains(cittàArrivo)) {
-                percorsiFiltrati.add(percorso);
-            }
-        }
 
-        return percorsiFiltrati;
-    }
-
-    public PesoArco getPesoArco(DefaultWeightedEdge arco) {
-        return pesoMap.get(arco);
-    }
     
     public int getNVertici (Graph<Città, DefaultEdge> grafo) {
     	return grafo.vertexSet().size(); 
@@ -179,5 +149,98 @@ public class Model {
     public int getNArchi (Graph<Città, DefaultEdge> grafo) {
     	return grafo.edgeSet().size(); 
     }
+
+
+    public List<DefaultEdge> trovaItinerarioOttimale(Graph<Città, DefaultEdge> grafo, Città cittàPartenza, double budget, double durataMassima, double permanenza) {
+        List<DefaultEdge> migliorItinerario = new ArrayList<>();
+        List<DefaultEdge> itinerarioParziale = new ArrayList<>();
+        Set<Città> cittàDisponibili = new HashSet<>(grafo.vertexSet());
+
+        // Mappa per la memoizzazione
+        Map<Pair<Città, Double>, Set<List<DefaultEdge>>> memo = new HashMap<>();
+        int maxArchi = (int) Math.floor(durataMassima / permanenza);
+
+        cercaItinerarioOttimale(grafo, cittàPartenza, cittàPartenza, itinerarioParziale, migliorItinerario, cittàDisponibili, budget, durataMassima, memo, permanenza, maxArchi);
+
+        return migliorItinerario;
+    }
+
+    private void cercaItinerarioOttimale(Graph<Città, DefaultEdge> grafo, Città cittàPartenza, Città cittàCorrente,
+            List<DefaultEdge> itinerarioParziale, List<DefaultEdge> migliorItinerario,
+            Set<Città> cittàDisponibili, double budget, double durataMassima, Map<Pair<Città, Double>, Set<List<DefaultEdge>>> memo, double permanenza, int maxNumeroArchi) {
+
+        Pair<Città, Double> memoKey = new Pair<>(cittàCorrente, budget);
+
+        // Verifica se la combinazione di parametri è già stata calcolata
+        if (memo.containsKey(memoKey)) {
+            Set<List<DefaultEdge>> cachedResults = memo.get(memoKey);
+            // Verifica se l'itinerarioParziale o una sua permutazione è già presente
+            if (contienePermutazioneEquivalenti(cachedResults, itinerarioParziale)) {
+                return;
+            }
+            // Aggiungi l'itinerarioParziale alla memoizzazione
+            cachedResults.add(new ArrayList<>(itinerarioParziale));
+        } else {
+            // Se la chiave non è presente nella memo, crea una nuova entry
+            Set<List<DefaultEdge>> itinerariMemo = new HashSet<>();
+            itinerariMemo.add(new ArrayList<>(itinerarioParziale));
+            memo.put(memoKey, itinerariMemo);
+        }
+        
+        // Controllo di destinazione: verifica se l'itinerario è completo e se l'ultimo arco ritorna alla città di partenza
+        if (itinerarioParziale.size() > migliorItinerario.size() &&
+            grafo.getEdgeTarget(itinerarioParziale.get(itinerarioParziale.size() - 1)).equals(cittàPartenza)) {
+
+            migliorItinerario.clear();
+            migliorItinerario.addAll(itinerarioParziale);
+            return;
+        }
+
+        for (DefaultEdge arco : grafo.edgesOf(cittàCorrente)) {
+            Città cittàDestinazione = Graphs.getOppositeVertex(grafo, arco, cittàCorrente);
+
+            if (cittàDisponibili.contains(cittàDestinazione)) {
+                PesoArco peso = pesoMap.get(arco);
+                double costoArco = peso.getCostoTot();
+                double durataArco = peso.getDurata();
+
+                // Verifica se l'aggiunta dell'arco rispetta i vincoli di budget e durata
+                if (costoArco <= budget && durataArco <= durataMassima && permanenza<=durataMassima) {
+                    // Aggiorna i valori di budget e durata
+                    double nuovoBudget = budget - costoArco;
+                    double nuovaDurataMassima = durataMassima - durataArco - permanenza;
+
+                    // Aggiungi l'arco al percorso parziale
+                    itinerarioParziale.add(arco);
+                    cittàDisponibili.remove(cittàDestinazione);
+
+                    // Chiamata ricorsiva per la città di destinazione
+                    cercaItinerarioOttimale(grafo, cittàPartenza, cittàDestinazione, itinerarioParziale, migliorItinerario, cittàDisponibili,
+                            nuovoBudget, nuovaDurataMassima, memo, permanenza,maxNumeroArchi);
+
+                    // Rimuovi l'arco dall'itinerario parziale e dalle città disponibili
+                    itinerarioParziale.remove(arco);
+                    cittàDisponibili.add(cittàDestinazione);
+                }
+            }
+        }
+    }
+
+
+ // Metodo ausiliario per verificare se l'insieme contiene una permutazione equivalente
+    private boolean contienePermutazioneEquivalenti(Set<List<DefaultEdge>> itinerari, List<DefaultEdge> itinerarioParziale) {
+        return itinerari.stream().anyMatch(it -> sonoEquivalenti(it, itinerarioParziale));
+    }
+
+    // Metodo ausiliario per verificare se due itinerari sono equivalenti o permutazioni l'uno dell'altro
+    private boolean sonoEquivalenti(List<DefaultEdge> itinerario1, List<DefaultEdge> itinerario2) {
+        // Verifica se gli itinerari hanno la stessa dimensione
+        if (itinerario1.size() != itinerario2.size()) {
+            return false;
+        }
+        // Verifica se gli itinerari sono uguali o una permutazione l'uno dell'altro
+        return itinerario1.containsAll(itinerario2) && itinerario2.containsAll(itinerario1);
+    }
+
 
 }

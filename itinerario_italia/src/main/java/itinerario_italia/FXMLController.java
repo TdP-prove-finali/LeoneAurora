@@ -214,33 +214,41 @@ public class FXMLController {
                     	// Calcolare la differenza in ore tra partenza e ritorno
                     	long differenzaInOre = ChronoUnit.HOURS.between(dateTimePartenza, dateTimeRitorno);
 
-                    	// Convertire la differenza in giorni e mezzo
+                    	// Calcolare il tempo totale in giorni (senza sottrarre la permanenza)
                     	double tempoTotale = differenzaInOre / 24.0;
-                    	permanenza.setMax(Math.round(tempoTotale));
+                    	
+                    	// Calcolare il tempo totale sottraendo le ore di riposo giornaliere
+                    	double tempoTotaleToltoRiposo = (differenzaInOre - (tempoTotale*8))*60;
+                    	
+                    	
+                    	
+                    	permanenza.setMax(Math.round((tempoTotale)));
 
                         try {
                             double permanenza = Double.parseDouble(permanenzaText);
                             if (permanenza <= Math.round(tempoTotale) && permanenza > 0) {
                             	
+                            	permanenza = (permanenza-(permanenza*8))*24*60 ;
+
                             	if (!cmbCittà.getValue().equals(null)) {
                             		LinkedList<Città> listaVertici;
+                            		Città cittàPartenza = model.cittàIdMap.get(cmbCittà.getValue());
                             		if (this.checkBalneare.isSelected()) {
                             			listaVertici  = new LinkedList<Città>(model.getCittàVertici(cmbCittà.getValue(), 1, listaRegioni, listaZone)); 
                                     } else {
                                     	listaVertici  = new LinkedList<Città>(model.getCittàVertici(cmbCittà.getValue(), 0, listaRegioni, listaZone));
+                                    	
                                     }
  	
-                            	    Graph<Città, DefaultEdge> grafo = model.creaGrafo(listaVertici, budget);
+                            	    Graph<Città, DefaultEdge> grafo = model.creaGrafo(listaVertici, budget, tempoTotaleToltoRiposo);
                             	    if (model.getNVertici(grafo)>0 && model.getNArchi(grafo)>0) {
                             	    	this.txtRisultato2.setText("Grafo creato con "+ model.getNVertici(grafo)+ "vertici e " + model.getNArchi(grafo)+"archi" );
-                            	    	Set<DefaultEdge> archi = grafo.edgeSet();
                                         
-                                        /*for (DefaultEdge arco : archi) {
-                                            Città cittàPartenza = grafo.getEdgeSource(arco);
-                                            Città cittàArrivo = grafo.getEdgeTarget(arco);
-
-                                            System.out.println("Arco da " + cittàPartenza.getNome() + " a " + cittàArrivo.getNome());
-                                        }*/
+                            	    	List<DefaultEdge> migliorItinerario = model.trovaItinerarioOttimale(grafo, cittàPartenza, budget, tempoTotaleToltoRiposo, permanenza);
+                            	    	for (DefaultEdge arc: migliorItinerario) {
+                            	    		this.txtRisultato2.appendText(arc+"\n"); 
+                            	    	}
+          
 
                             	    } else {
                             	    	this.txtRisultato2.setText("Non ci sono collegamenti disponibili per i parametri selezionati\n prova a cambiare qualche filtro!");
@@ -336,6 +344,8 @@ public class FXMLController {
     	this.cmbRegione.setValue(null);
     	this.cmbZona.setValue(null); 
     	checkBalneare.setSelected(false);
+    	this.listaRegioni.clear();
+    	this.listaZone.clear();
 
     }
 
