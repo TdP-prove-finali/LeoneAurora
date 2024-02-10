@@ -242,7 +242,7 @@ public class FXMLController {
                                     	
                                     }
  	
-                            	    Graph<Città, DefaultEdge> grafo = model.creaGrafo(listaVertici, budget, tempoFinaleM);
+                            	    Graph<Città, DefaultEdge> grafo = model.creaGrafo(listaVertici, budget, tempoFinaleM, cittàPartenza);
                             	    
                             	    if (model.getNVertici(grafo)>0 && model.getNArchi(grafo)>0) {
                             	    	this.txtRisultato2.setText("Grafo creato con "+ model.getNVertici(grafo)+ "vertici e " + model.getNArchi(grafo)+"archi" );
@@ -252,7 +252,8 @@ public class FXMLController {
                             	    		for (DefaultEdge arc: migliorItinerario) {
                                 	    		this.txtRisultato2.appendText(arc+"\n"); 
                                 	    	}
-                            	    	}else {                          	   
+                            	    	}else {  
+                            	    		
                             	    		this.txtRisultato2.setText("Non è possibile creare un itinerario, cambia alcuni parametri!\n"
                             	    				+ "Prova ad aumetare il budget o la durata del tuo viaggio\n"
                             	    				+ "oppure prova a scegliere regioni più vicine alla tua città di partenza");

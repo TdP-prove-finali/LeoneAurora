@@ -26,7 +26,7 @@ public class Model {
 	private Graph<Città, DefaultEdge> grafo;
 	public Map<String, Città> cittàIdMap;
 	public Map<Integer, Città> cittàIdMap2;
-	private Map<DefaultEdge, PesoArco> pesoMap;
+	public Map<DefaultEdge, PesoArco> pesoMap;
 
 
     public Model() {
@@ -113,33 +113,70 @@ public class Model {
 	}
 
 	
-	public Graph<Città, DefaultEdge> creaGrafo(List<Città> vertici, double budget, double durataTot) {
+	public Graph<Città, DefaultEdge> creaGrafo(List<Città> vertici, double budget, double durataTot, Città partenzaScelta) {
 	    grafo = new SimpleGraph<>(DefaultEdge.class);
 
-	    vertici.forEach(grafo::addVertex);
-
+	    System.out.println("Vertici nel grafo prima dell'aggiunta: " + vertici);
 	    pesoMap = new HashMap<>();
-	    
+	    grafo.addVertex(partenzaScelta);
+
+	    // Lista temporanea per accumulare i vertici da aggiungere dopo l'iterazione
+	    List<Città> verticiDaAggiungere = new ArrayList<>();
+
+	    // Itera sui percorsi che hanno la città scelta come città di partenza o arrivo
 	    dao.getAllpercorsi().stream()
-	        .filter(percorso -> vertici.contains(cittàIdMap2.get(percorso.getId1())) &&
-	                            vertici.contains(cittàIdMap2.get(percorso.getId2())))
-	        .forEach(percorso -> {
-	            Città cittàPartenza = cittàIdMap2.get(percorso.getId1());
-	            Città cittàArrivo = cittàIdMap2.get(percorso.getId2());
-	            double costoTot = percorso.getCostoTot();
-	            String durata = percorso.getDurata();
-	            PesoArco pesoArco = new PesoArco(costoTot, durata);
-	            
-	            if (costoTot <= budget && pesoArco.getDurata()<=durataTot) {
-	                DefaultEdge arco = grafo.addEdge(cittàPartenza, cittàArrivo);
-	                if (arco != null) {
+		    .filter(percorso -> vertici.contains(cittàIdMap2.get(percorso.getId1())) &&
+		                        vertici.contains(cittàIdMap2.get(percorso.getId2())))
+		    .forEach(percorso -> {
+	                Città cittàPartenza = cittàIdMap2.get(percorso.getId1());
+	                Città cittàArrivo = cittàIdMap2.get(percorso.getId2());
+	                double costoTot = percorso.getCostoTot();
+	                String durata = percorso.getDurata();
+	                PesoArco pesoArco = new PesoArco(costoTot, durata);
+
+	                // Controlla i filtri per l'aggiunta di vertici e archi
+	                if (costoTot <= budget && pesoArco.getDurata() <= durataTot) {
+	                    if (cittàPartenza.equals(partenzaScelta)) {
+	                        double costoDoppio = costoTot * 2;
+	                        if (costoDoppio <= budget) {
+	                            verticiDaAggiungere.add(cittàArrivo);
+	                        }
+	                    } else if (cittàArrivo.equals(partenzaScelta)) {
+	                        double costoDoppio = costoTot * 2;
+	                        if (costoDoppio <= budget) {
+	                            verticiDaAggiungere.add(cittàPartenza);
+	                        }
+	                    }
+	                }
+	            });
+
+	    // Aggiungi i vertici accumulati al grafo
+	    verticiDaAggiungere.forEach(grafo::addVertex);
+
+	    // Itera sui percorsi rimasti e aggiungi gli archi se entrambe le città sono vertici del grafo
+	    dao.getAllpercorsi().stream()
+	            .filter(percorso -> vertici.contains(cittàIdMap2.get(percorso.getId1())) &&
+	                                vertici.contains(cittàIdMap2.get(percorso.getId2())))
+	            .forEach(percorso -> {
+	                Città cittàPartenza = cittàIdMap2.get(percorso.getId1());
+	                Città cittàArrivo = cittàIdMap2.get(percorso.getId2());
+	                double costoTot = percorso.getCostoTot();
+	                String durata = percorso.getDurata();
+	                PesoArco pesoArco = new PesoArco(costoTot, durata);
+
+	                // Controlla i filtri per l'aggiunta dell'arco
+	                if (grafo.containsVertex(cittàPartenza) && grafo.containsVertex(cittàArrivo)
+	                        && costoTot <= budget && pesoArco.getDurata() <= durataTot) {
+	                    DefaultEdge arco = grafo.addEdge(cittàPartenza, cittàArrivo);
 	                    pesoMap.put(arco, pesoArco);
 	                }
-	            }
-	        });
+	            });
 
+	    System.out.println("Vertici nel grafo dopo l'aggiunta: " + grafo.vertexSet());
 	    return grafo;
 	}
+
+
 
 
     
@@ -159,10 +196,18 @@ public class Model {
 
         // Mappa per la memoizzazione
         Map<Pair<Città, Pair<Double, Double>>, Set<List<DefaultEdge>>> memo = new HashMap<>();
+        
+        //DA CONTROLLARE
+        /*if (cittàDisponibili.size() == 1) {
+            Città[] cittàArray = cittàDisponibili.toArray(new Città[1]);
+            Città destinazione = cittàArray[0];
+            migliorItinerario.add(grafo.getEdge(cittàPartenza, destinazione));
+            migliorItinerario.add(grafo.getEdge(cittàPartenza, destinazione));
+        } else {
+        	cercaItinerarioOttimale(grafo, cittàPartenza, cittàPartenza, itinerarioParziale, migliorItinerario, cittàDisponibili, budget, durataMassima, memo, permanenza);
 
-
+        }*/
         cercaItinerarioOttimale(grafo, cittàPartenza, cittàPartenza, itinerarioParziale, migliorItinerario, cittàDisponibili, budget, durataMassima, memo, permanenza);
-
         return migliorItinerario;
     }
 
@@ -172,6 +217,17 @@ public class Model {
 
     	Pair<Città, Pair<Double, Double>> memoKey = new Pair<>(cittàCorrente, new Pair<>(budget, durataMassima));
     	
+    	/* NON VA PERCHE MI MODIFICA IL GRAFO NEL METRE MI SA
+    	Iterator<DefaultEdge> edgeIterator = grafo.edgesOf(cittàPartenza).iterator();
+	    while (edgeIterator.hasNext()) {
+	        DefaultEdge arco = edgeIterator.next();
+	        double costoDoppio = pesoMap.get(arco).getCostoTot() * 2;
+	        if (costoDoppio > budget) {
+	            grafo.removeVertex(Graphs.getOppositeVertex(grafo, arco, cittàPartenza));
+	            // Rimuovi l'arco dalla collezione di archi usando l'iterator
+	            edgeIterator.remove();
+	        }
+	    }*/
 
     	// Verifica se la combinazione di parametri è già stata calcolata
         if (memo.containsKey(memoKey)) {
@@ -191,12 +247,14 @@ public class Model {
         
         // Controllo di destinazione: verifica se l'itinerario è completo e se l'ultimo arco ritorna alla città di partenza
         if (itinerarioParziale.size() > migliorItinerario.size() &&
-            grafo.getEdgeTarget(itinerarioParziale.get(itinerarioParziale.size() - 1)).equals(cittàPartenza)) {
+            (grafo.getEdgeTarget(itinerarioParziale.get(itinerarioParziale.size() - 1)).equals(cittàPartenza)|| 
+            grafo.getEdgeSource(itinerarioParziale.get(itinerarioParziale.size() - 1)).equals(cittàPartenza))) {
 
             migliorItinerario.clear();
             migliorItinerario.addAll(itinerarioParziale);
             return;
         }
+        
         
         List<DefaultEdge> archiOrdinati = grafo.edgesOf(cittàCorrente).stream()
                 .filter(arco -> cittàDisponibili.contains(Graphs.getOppositeVertex(grafo, arco, cittàCorrente)))
@@ -217,8 +275,7 @@ public class Model {
                     // Aggiorna i valori di budget e durata
                     double nuovoBudget = budget - costoArco;
                     double nuovaDurataMassima = durataMassima - durataArco;
-                   
-
+                    
 
                     // Aggiungi l'arco al percorso parziale
                     itinerarioParziale.add(arco);
@@ -227,6 +284,12 @@ public class Model {
                     // Chiamata ricorsiva per la città di destinazione
                     cercaItinerarioOttimale(grafo, cittàPartenza, cittàDestinazione, itinerarioParziale, migliorItinerario, cittàDisponibili,
                             nuovoBudget, nuovaDurataMassima, memo, permanenza);
+                    
+                    System.out.println("DEBUG - Città Corrente: " + cittàCorrente);
+                    System.out.println("DEBUG - Itinerario Parziale: " + itinerarioParziale);
+                    System.out.println("DEBUG - Miglior Itinerario: " + migliorItinerario);
+                    
+
 
                     // Rimuovi l'arco dall'itinerario parziale e dalle città disponibili
                     itinerarioParziale.remove(arco);
