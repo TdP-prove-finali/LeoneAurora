@@ -28,6 +28,11 @@ import java.time.temporal.ChronoUnit;
 public class FXMLController {
 	
 	private Model model;
+	private Graph<Città, DefaultEdge> grafo;
+	private Città cittàPartenza;
+	double permanenzaValore;
+	double budget;
+	double tempoFinaleM;
 
     @FXML // ResourceBundle that was given to the FXMLLoader
     private ResourceBundle resources;
@@ -118,6 +123,8 @@ public class FXMLController {
 
     @FXML // fx:id="txtRisultato4"
     private TextArea txtRisultato4; // Value injected by FXMLLoader
+    
+    
 
     @FXML
     void confermaCittà(ActionEvent event) {
@@ -174,10 +181,11 @@ public class FXMLController {
     void calcolaItinerario(ActionEvent event) {
     	this.txtRisultato1.clear();
     	this.txtRisultato2.clear();
+    	
 
         try { 
             // Tentativo di convertire il testo in double
-            double budget = Double.parseDouble(txtBudget.getText());
+            budget = Double.parseDouble(txtBudget.getText());
             this.txtRisultato1.clear(); 
 
             // Ottenere il valore testuale dagli elementi txtOrario
@@ -219,21 +227,21 @@ public class FXMLController {
 
                     	// Calcolare il tempo totale sottraendo le ore di riposo giornaliere
                     	double tempoTotaleToltoRiposoH = differenzaInOre - (tempoTotale * 8);
-                    	double tempoFinaleM = tempoTotaleToltoRiposoH*60;
+                    	tempoFinaleM = tempoTotaleToltoRiposoH*60;
                     	
 
                     	// Impostare il massimo per la permanenza
                     	permanenza.setMax(Math.round(tempoTotale));
 
                         try {
-                            double permanenza = Double.parseDouble(permanenzaText);
-                            if (permanenza <= Math.round(tempoTotale) && permanenza > 0) {
-                                permanenza = (permanenza * 24) - (permanenza*8) ;
-                                permanenza = permanenza*60;
+                            permanenzaValore = Double.parseDouble(permanenzaText);
+                            if (permanenzaValore <= Math.round(tempoTotale) && permanenzaValore > 0) {
+                            	permanenzaValore = (permanenzaValore * 24) - (permanenzaValore*8) ;
+                            	permanenzaValore = permanenzaValore*60;
 
                             	if (!cmbCittà.getValue().equals(null)) {
                             		LinkedList<Città> listaVertici;
-                            		Città cittàPartenza = model.cittàIdMap.get(cmbCittà.getValue());
+                            		cittàPartenza = model.cittàIdMap.get(cmbCittà.getValue());
                             		if (this.checkBalneare.isSelected()) {
                             			listaVertici  = new LinkedList<Città>(model.getCittàVertici(cmbCittà.getValue(), 1, listaRegioni, zonaScelta)); 
                                     } else {
@@ -242,25 +250,49 @@ public class FXMLController {
                                     	
                                     }
  	
-                            	    Graph<Città, DefaultEdge> grafo = model.creaGrafo(listaVertici, budget, tempoFinaleM, cittàPartenza);
+                            	    grafo = model.creaGrafo(listaVertici, budget, tempoFinaleM, cittàPartenza);
                             	    
                             	    if (model.getNVertici(grafo)>0 && model.getNArchi(grafo)>0) {
                             	    	this.txtRisultato2.setText("Grafo creato con "+ model.getNVertici(grafo)+ "vertici e " + model.getNArchi(grafo)+"archi" );
+                            	    	cmbEscludere.setDisable(false);
+                            	        btnInviaEscludere.setDisable(false);
+                            	        btnRicalcola.setDisable(false);
                             	    	if (model.getNVertici(grafo) ==2) {
                             	    		this.txtRisultato2.appendText(grafo.edgeSet()+"\n");
                             	    		this.txtRisultato2.appendText(grafo.edgeSet()+"\n");
                             	    	}else {
-                            	    		List<DefaultEdge> migliorItinerario = model.trovaItinerarioOttimale(grafo, cittàPartenza, budget, tempoFinaleM, permanenza);
+                            	    		
+                            	    		this.cmbEscludere.getItems().clear();
+                            	    		List<DefaultEdge> migliorItinerario = model.trovaItinerarioOttimale(grafo, cittàPartenza, budget, tempoFinaleM, permanenzaValore);
                                 	    	if (migliorItinerario.size()>1) {
                                 	    		for (DefaultEdge arc: migliorItinerario) {
-                                    	    		this.txtRisultato2.appendText(arc+"\n"); 
+                                    	    		this.txtRisultato2.appendText(arc+"\n"); 	
+                                    	    		Città città1 = grafo.getEdgeSource(arc);
+                                	    		    Città città2 = grafo.getEdgeTarget(arc);
+                                	    		    
+                                	    		    if(!città1.equals(cittàPartenza) && !città2.equals(cittàPartenza)) {
+                                	    		    	// Aggiunge le città alla ComboBox solo se non sono già presenti
+                                    	    		    if (!cmbEscludere.getItems().contains(città1.getNome()) && !cmbEscludere.getItems().contains(città2.getNome())) {
+                                    	    		    	cmbEscludere.getItems().add(città1.getNome());
+                                    	    		    	cmbEscludere.getItems().add(città2.getNome());
+                                    	    		    }else if (cmbEscludere.getItems().contains(città1.getNome()) && !cmbEscludere.getItems().contains(città2.getNome())) {
+                                    	    		    	cmbEscludere.getItems().add(città2.getNome());
+                                    	    		    }else if (!cmbEscludere.getItems().contains(città1.getNome()) && cmbEscludere.getItems().contains(città2.getNome())) {
+                                    	    		    	cmbEscludere.getItems().add(città1.getNome());
+                                    	    		    }
+                                	    		    }
+                	    		    
                                     	    	}
+
+
+
                                 	    	}else {  
                                 	    		
                                 	    		this.txtRisultato2.setText("Non è possibile creare un itinerario, cambia alcuni parametri!\n"
                                 	    				+ "Prova ad aumetare il budget o la durata del tuo viaggio\n"
                                 	    				+ "oppure prova a scegliere regioni più vicine alla tua città di partenza");
                                 	    	}
+                                	    	
                             	    	}   	
 
                             	    } else {
@@ -353,13 +385,75 @@ public class FXMLController {
     	checkBalneare.setSelected(false);
     	this.listaRegioni.clear();
     	this.zonaScelta=""; 
+    	this.btnRicalcola.setDisable(true);
+    	this.cmbEscludere.getItems().clear();
+    	this.cmbEscludere.setDisable(true);
+    	this.btnInviaEscludere.setDisable(true);
+    	
+    	// riattivare gli altri pulsanti
+        this.btnCalcola.setDisable(false);
+        this.btnConfermaCittà.setDisable(false);
+        this.cmbCittà.setDisable(false);
+        this.txtBudget.setDisable(false);
+        this.txtOrario.setDisable(false);
+        this.txtOrario2.setDisable(false);
+        this.txtPermanenza.setDisable(false);
+        this.txtRisultato3.clear();
+        this.txtRisultato1.clear();
+        this.txtRisultato2.clear();
+        this.orario.setDisable(true);
+        this.orario2.setDisable(true);
+        this.permanenza.setDisable(false);
+        this.dataPartenza.setDisable(false);
+        this.dataRitorno.setDisable(false);
+        this.orario.setDisable(false);
+        this.orario2.setDisable(false);
+        this.checkBalneare.setDisable(false);
+ 
 
     }
 
     @FXML
     void inviaEscludere(ActionEvent event) {
-    	
+        // Ottieni il valore dalla ComboBox
+        String cittàDaEscludere = cmbEscludere.getValue();
+
+        // Ottieni la Città dalla tua idMap delle città
+        Città città = model.cittàIdMap.get(cittàDaEscludere);
+
+        // Disabilita gli altri pulsanti
+        this.btnCalcola.setDisable(true);
+        this.btnConfermaCittà.setDisable(true);
+        this.btnEliminaREg.setDisable(true);
+        this.btnEliminaZona.setDisable(true);
+        this.btnInviaRegione.setDisable(true);
+        this.btnInviaZona.setDisable(true);
+        this.cmbCittà.setDisable(true);
+        this.cmbFiltri.setDisable(true);
+        this.cmbRegione.setDisable(true);
+        this.cmbZona.setDisable(true);
+        this.txtBudget.setDisable(true);
+        this.txtOrario.setDisable(true);
+        this.txtOrario2.setDisable(true);
+        this.txtPermanenza.setDisable(true);
+        this.txtRisultato3.clear();
+        this.orario.setDisable(true);
+        this.orario2.setDisable(true);
+        this.permanenza.setDisable(true);
+        this.dataPartenza.setDisable(true);
+        this.dataRitorno.setDisable(true);
+        this.checkBalneare.setDisable(true);
+
+        // Rimuovi la città dal grafo
+        grafo.removeVertex(città);
+        this.txtRisultato1.appendText("Hai rimosso "+cittàDaEscludere+ " dal percorso. \n");
+        this.txtRisultato2.clear();
+        this.txtRisultato3.clear();
+
+        this.btnRicalcola.setDisable(false);
+
     }
+
 
     private List<String> listaRegioni = new LinkedList<>();
     private String zonaScelta = "";
@@ -401,6 +495,43 @@ public class FXMLController {
 
     @FXML
     void ricalcola(ActionEvent event) {
+    	
+    	if (model.getNVertici(grafo) ==2) {
+    		this.txtRisultato2.appendText(grafo.edgeSet()+"\n");
+    		this.txtRisultato2.appendText(grafo.edgeSet()+"\n");
+    	}else {
+    		
+    		this.cmbEscludere.getItems().clear();
+    		List<DefaultEdge> migliorItinerario = model.trovaItinerarioOttimale(grafo, cittàPartenza, budget, tempoFinaleM, permanenzaValore);
+	    	if (migliorItinerario.size()>1) {
+	    		for (DefaultEdge arc: migliorItinerario) {
+    	    		this.txtRisultato2.appendText(arc+"\n"); 	
+    	    		Città città1 = grafo.getEdgeSource(arc);
+	    		    Città città2 = grafo.getEdgeTarget(arc);
+	    		    
+	    		    if(!città1.equals(cittàPartenza) && !città2.equals(cittàPartenza)) {
+	    		    	// Aggiunge le città alla ComboBox solo se non sono già presenti
+    	    		    if (!cmbEscludere.getItems().contains(città1.getNome()) && !cmbEscludere.getItems().contains(città2.getNome())) {
+    	    		    	cmbEscludere.getItems().add(città1.getNome());
+    	    		    	cmbEscludere.getItems().add(città2.getNome());
+    	    		    }else if (cmbEscludere.getItems().contains(città1.getNome()) && !cmbEscludere.getItems().contains(città2.getNome())) {
+    	    		    	cmbEscludere.getItems().add(città2.getNome());
+    	    		    }else if (!cmbEscludere.getItems().contains(città1.getNome()) && cmbEscludere.getItems().contains(città2.getNome())) {
+    	    		    	cmbEscludere.getItems().add(città1.getNome());
+    	    		    }
+	    		    }
+    
+    	    	}
+
+	    	}else {  
+	    		
+	    		this.txtRisultato2.setText("Non è possibile creare un nuovo itinerario, premi il tasto RESET\n"
+	    				+ "cambia alcuni parametri!\n"
+	    				+ "Prova ad aumetare il budget o la durata del tuo viaggio\n"
+	    				+ "oppure prova a scegliere regioni più vicine alla tua città di partenza");
+	    	}
+    	}
+    	
 
     }
     
@@ -531,7 +662,12 @@ public class FXMLController {
             }
         });
 
+        cmbEscludere.setDisable(true);
+        btnInviaEscludere.setDisable(true);
+        btnRicalcola.setDisable(true);
+
 
     }
+    
 
 }
