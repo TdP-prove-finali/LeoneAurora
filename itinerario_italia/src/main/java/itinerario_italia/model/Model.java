@@ -216,18 +216,7 @@ public class Model {
             Set<Città> cittàDisponibili, double budget, double durataMassima, Map<Pair<Città, Pair<Double, Double>>, Set<List<DefaultEdge>>> memo, double permanenza) {
 
     	Pair<Città, Pair<Double, Double>> memoKey = new Pair<>(cittàCorrente, new Pair<>(budget, durataMassima));
-    	
-    	/* NON VA PERCHE MI MODIFICA IL GRAFO NEL METRE MI SA
-    	Iterator<DefaultEdge> edgeIterator = grafo.edgesOf(cittàPartenza).iterator();
-	    while (edgeIterator.hasNext()) {
-	        DefaultEdge arco = edgeIterator.next();
-	        double costoDoppio = pesoMap.get(arco).getCostoTot() * 2;
-	        if (costoDoppio > budget) {
-	            grafo.removeVertex(Graphs.getOppositeVertex(grafo, arco, cittàPartenza));
-	            // Rimuovi l'arco dalla collezione di archi usando l'iterator
-	            edgeIterator.remove();
-	        }
-	    }*/
+
 
     	// Verifica se la combinazione di parametri è già stata calcolata
         if (memo.containsKey(memoKey)) {
@@ -244,7 +233,8 @@ public class Model {
             itinerariMemo.add(new ArrayList<>(itinerarioParziale));
             memo.put(memoKey, itinerariMemo);
         }
-        
+
+
         // Controllo di destinazione: verifica se l'itinerario è completo e se l'ultimo arco ritorna alla città di partenza
         if (itinerarioParziale.size() > migliorItinerario.size() &&
             (grafo.getEdgeTarget(itinerarioParziale.get(itinerarioParziale.size() - 1)).equals(cittàPartenza)|| 
@@ -284,12 +274,6 @@ public class Model {
                     // Chiamata ricorsiva per la città di destinazione
                     cercaItinerarioOttimale(grafo, cittàPartenza, cittàDestinazione, itinerarioParziale, migliorItinerario, cittàDisponibili,
                             nuovoBudget, nuovaDurataMassima, memo, permanenza);
-                    
-                    System.out.println("DEBUG - Città Corrente: " + cittàCorrente);
-                    System.out.println("DEBUG - Itinerario Parziale: " + itinerarioParziale);
-                    System.out.println("DEBUG - Miglior Itinerario: " + migliorItinerario);
-                    
-
 
                     // Rimuovi l'arco dall'itinerario parziale e dalle città disponibili
                     itinerarioParziale.remove(arco);

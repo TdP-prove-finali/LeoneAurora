@@ -246,18 +246,22 @@ public class FXMLController {
                             	    
                             	    if (model.getNVertici(grafo)>0 && model.getNArchi(grafo)>0) {
                             	    	this.txtRisultato2.setText("Grafo creato con "+ model.getNVertici(grafo)+ "vertici e " + model.getNArchi(grafo)+"archi" );
-                                        
-                            	    	List<DefaultEdge> migliorItinerario = model.trovaItinerarioOttimale(grafo, cittàPartenza, budget, tempoFinaleM, permanenza);
-                            	    	if (migliorItinerario.size()>1) {
-                            	    		for (DefaultEdge arc: migliorItinerario) {
-                                	    		this.txtRisultato2.appendText(arc+"\n"); 
+                            	    	if (model.getNVertici(grafo) ==2) {
+                            	    		this.txtRisultato2.appendText(grafo.edgeSet()+"\n");
+                            	    		this.txtRisultato2.appendText(grafo.edgeSet()+"\n");
+                            	    	}else {
+                            	    		List<DefaultEdge> migliorItinerario = model.trovaItinerarioOttimale(grafo, cittàPartenza, budget, tempoFinaleM, permanenza);
+                                	    	if (migliorItinerario.size()>1) {
+                                	    		for (DefaultEdge arc: migliorItinerario) {
+                                    	    		this.txtRisultato2.appendText(arc+"\n"); 
+                                    	    	}
+                                	    	}else {  
+                                	    		
+                                	    		this.txtRisultato2.setText("Non è possibile creare un itinerario, cambia alcuni parametri!\n"
+                                	    				+ "Prova ad aumetare il budget o la durata del tuo viaggio\n"
+                                	    				+ "oppure prova a scegliere regioni più vicine alla tua città di partenza");
                                 	    	}
-                            	    	}else {  
-                            	    		
-                            	    		this.txtRisultato2.setText("Non è possibile creare un itinerario, cambia alcuni parametri!\n"
-                            	    				+ "Prova ad aumetare il budget o la durata del tuo viaggio\n"
-                            	    				+ "oppure prova a scegliere regioni più vicine alla tua città di partenza");
-                            	    	}
+                            	    	}   	
 
                             	    } else {
                             	    	this.txtRisultato2.setText("Non ci sono collegamenti disponibili per i parametri selezionati\n prova a cambiare qualche filtro!");
