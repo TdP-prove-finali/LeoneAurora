@@ -3,6 +3,7 @@ package itinerario_italia;
 import java.net.URL;
 
 import org.jgrapht.Graph;
+import org.jgrapht.Graphs;
 import org.jgrapht.graph.DefaultEdge;
 
 import java.util.*;
@@ -30,9 +31,10 @@ public class FXMLController {
 	private Model model;
 	private Graph<Città, DefaultEdge> grafo;
 	private Città cittàPartenza;
-	double permanenzaValore;
-	double budget;
-	double tempoFinaleM;
+	private double permanenzaValore;
+	private double budget;
+	private double tempoFinaleM;
+	private List<String> itinerario;
 
     @FXML // ResourceBundle that was given to the FXMLLoader
     private ResourceBundle resources;
@@ -133,6 +135,7 @@ public class FXMLController {
     		Città cittàPartenza = this.model.cittàIdMap.get(nomeCittàPartenza);
     	if (!("Sicilia".equalsIgnoreCase(cittàPartenza.getRegione()) || "Sardegna".equalsIgnoreCase(cittàPartenza.getRegione()))) {
     		this.cmbFiltri.setDisable(false);
+    		this.txtRisultato2.clear();
     	}
     	else {
     		this.cmbFiltri.setDisable(true);
@@ -143,6 +146,12 @@ public class FXMLController {
 			this.cmbRegione.setValue(null);
 			this.btnInviaRegione.setDisable(true);
 			this.btnInviaZona.setDisable(true);
+			this.btnEliminaREg.setDisable(true);
+			this.btnEliminaZona.setDisable(true);
+			this.listaRegioni.clear();
+			this.zonaScelta ="";
+			this.txtRisultato3.clear();
+			this.txtRisultato2.clear();
     	}
     	}
     	
@@ -251,38 +260,81 @@ public class FXMLController {
                                     }
  	
                             	    grafo = model.creaGrafo(listaVertici, budget, tempoFinaleM, cittàPartenza);
-                            	    
+                            	    itinerario = new ArrayList<>();
                             	    if (model.getNVertici(grafo)>0 && model.getNArchi(grafo)>0) {
-                            	    	this.txtRisultato2.setText("Grafo creato con "+ model.getNVertici(grafo)+ "vertici e " + model.getNArchi(grafo)+"archi" );
+                            	    	this.txtRisultato2.setText("Grafo creato con "+ model.getNVertici(grafo)+ "vertici e " + model.getNArchi(grafo)+"archi\n" );
                             	    	cmbEscludere.setDisable(false);
                             	        btnInviaEscludere.setDisable(false);
                             	        btnRicalcola.setDisable(false);
                             	    	if (model.getNVertici(grafo) ==2) {
-                            	    		this.txtRisultato2.appendText(grafo.edgeSet()+"\n");
-                            	    		this.txtRisultato2.appendText(grafo.edgeSet()+"\n");
+                            	    		
+                            	    		for(DefaultEdge arcoo : grafo.edgeSet()) {
+                            	    			Città cittàSource = grafo.getEdgeSource(arcoo);
+                            	    		    Città cittàTarget = grafo.getEdgeTarget(arcoo);
+                            	    		    if(cittàSource.getNome().equals(cittàPartenza.getNome())) {
+                        	    		    		itinerario.add(cittàSource.getNome());
+                        	    		    		itinerario.add(cittàTarget.getNome());
+                        	    		    	}else {
+                        	    		    		itinerario.add(cittàTarget.getNome());
+                        	    		    		itinerario.add(cittàSource.getNome());
+                        	    		    		}
+                            	    		}
+                            	    		itinerario.add(cittàPartenza.getNome());
+                            	    		
+                            	    		// Costruisci la stringa dell'itinerario
+                            	    		String itinerarioStringa = String.join(" -> ", itinerario);
+
+                            	    		// Aggiungi la stringa all'area di testo
+                            	    		this.txtRisultato2.appendText(itinerarioStringa + "\n");
+                            	    		
                             	    	}else {
                             	    		
                             	    		this.cmbEscludere.getItems().clear();
                             	    		List<DefaultEdge> migliorItinerario = model.trovaItinerarioOttimale(grafo, cittàPartenza, budget, tempoFinaleM, permanenzaValore);
                                 	    	if (migliorItinerario.size()>1) {
-                                	    		for (DefaultEdge arc: migliorItinerario) {
-                                    	    		this.txtRisultato2.appendText(arc+"\n"); 	
-                                    	    		Città città1 = grafo.getEdgeSource(arc);
-                                	    		    Città città2 = grafo.getEdgeTarget(arc);
-                                	    		    
-                                	    		    if(!città1.equals(cittàPartenza) && !città2.equals(cittàPartenza)) {
-                                	    		    	// Aggiunge le città alla ComboBox solo se non sono già presenti
-                                    	    		    if (!cmbEscludere.getItems().contains(città1.getNome()) && !cmbEscludere.getItems().contains(città2.getNome())) {
-                                    	    		    	cmbEscludere.getItems().add(città1.getNome());
-                                    	    		    	cmbEscludere.getItems().add(città2.getNome());
-                                    	    		    }else if (cmbEscludere.getItems().contains(città1.getNome()) && !cmbEscludere.getItems().contains(città2.getNome())) {
-                                    	    		    	cmbEscludere.getItems().add(città2.getNome());
-                                    	    		    }else if (!cmbEscludere.getItems().contains(città1.getNome()) && cmbEscludere.getItems().contains(città2.getNome())) {
-                                    	    		    	cmbEscludere.getItems().add(città1.getNome());
-                                    	    		    }
+                                	    		
+                                	    		for (DefaultEdge arco : migliorItinerario) {
+                                	    		    Città cittàSource = grafo.getEdgeSource(arco);
+                                	    		    Città cittàTarget = grafo.getEdgeTarget(arco);
+
+                                	    		    // Aggiungi città all set in modo ordinato
+                                	    		    if (itinerario.isEmpty()) {
+                                	    		    	if(cittàSource.getNome().equals(cittàPartenza.getNome())) {
+                                	    		    		itinerario.add(cittàSource.getNome());
+                                	    		    		itinerario.add(cittàTarget.getNome());
+                                	    		    	}else {
+                                	    		    		itinerario.add(cittàTarget.getNome());
+                                	    		    		itinerario.add(cittàSource.getNome());
+                                	    		    	}
+                                	    		      
+                                	    		    } else {
+                                	    		    	String ultimoInserito = itinerario.get(itinerario.size() - 1);
+                                	    		        if (ultimoInserito.equals(cittàSource.getNome())) {
+                                	    		            itinerario.add(cittàTarget.getNome());
+                                	    		        } else {
+                                	    		            itinerario.add(cittàSource.getNome());
+                                	    		        }
                                 	    		    }
-                	    		    
-                                    	    	}
+
+                                	    		    // Aggiunge le città alla ComboBox solo se non sono già presenti
+                                	    		    if (!cmbEscludere.getItems().contains(cittàSource.getNome()) && !cmbEscludere.getItems().contains(cittàTarget.getNome())) {
+                                	    		        cmbEscludere.getItems().add(cittàSource.getNome());
+                                	    		        cmbEscludere.getItems().add(cittàTarget.getNome());
+                                	    		    } else if (cmbEscludere.getItems().contains(cittàSource.getNome()) && !cmbEscludere.getItems().contains(cittàTarget.getNome())) {
+                                	    		        cmbEscludere.getItems().add(cittàTarget.getNome());
+                                	    		    } else if (!cmbEscludere.getItems().contains(cittàSource.getNome()) && cmbEscludere.getItems().contains(cittàTarget.getNome())) {
+                                	    		        cmbEscludere.getItems().add(cittàSource.getNome());
+                                	    		    }
+                                	    		}
+
+                                	    		// Costruisci la stringa dell'itinerario
+                                	    		String itinerarioStringa = String.join(" -> ", itinerario);
+
+                                	    		// Aggiungi la stringa all'area di testo
+                                	    		this.txtRisultato2.appendText(itinerarioStringa + "\n");
+
+
+
 
 
 
@@ -496,32 +548,78 @@ public class FXMLController {
     @FXML
     void ricalcola(ActionEvent event) {
     	
+    	itinerario = new ArrayList<>();
+    	
     	if (model.getNVertici(grafo) ==2) {
-    		this.txtRisultato2.appendText(grafo.edgeSet()+"\n");
-    		this.txtRisultato2.appendText(grafo.edgeSet()+"\n");
+    		for(DefaultEdge arcoo : grafo.edgeSet()) {
+    			Città cittàSource = grafo.getEdgeSource(arcoo);
+    		    Città cittàTarget = grafo.getEdgeTarget(arcoo);
+    		    if(cittàSource.getNome().equals(cittàPartenza.getNome())) {
+		    		itinerario.add(cittàSource.getNome());
+		    		itinerario.add(cittàTarget.getNome());
+		    	}else {
+		    		itinerario.add(cittàTarget.getNome());
+		    		itinerario.add(cittàSource.getNome());
+		    		}
+    		}
+    		itinerario.add(cittàPartenza.getNome());
+    		
+    		// Costruisci la stringa dell'itinerario
+    		String itinerarioStringa = String.join(" -> ", itinerario);
+
+    		// Aggiungi la stringa all'area di testo
+    		this.txtRisultato2.appendText(itinerarioStringa + "\n");
     	}else {
     		
     		this.cmbEscludere.getItems().clear();
     		List<DefaultEdge> migliorItinerario = model.trovaItinerarioOttimale(grafo, cittàPartenza, budget, tempoFinaleM, permanenzaValore);
 	    	if (migliorItinerario.size()>1) {
-	    		for (DefaultEdge arc: migliorItinerario) {
-    	    		this.txtRisultato2.appendText(arc+"\n"); 	
-    	    		Città città1 = grafo.getEdgeSource(arc);
-	    		    Città città2 = grafo.getEdgeTarget(arc);
-	    		    
-	    		    if(!città1.equals(cittàPartenza) && !città2.equals(cittàPartenza)) {
-	    		    	// Aggiunge le città alla ComboBox solo se non sono già presenti
-    	    		    if (!cmbEscludere.getItems().contains(città1.getNome()) && !cmbEscludere.getItems().contains(città2.getNome())) {
-    	    		    	cmbEscludere.getItems().add(città1.getNome());
-    	    		    	cmbEscludere.getItems().add(città2.getNome());
-    	    		    }else if (cmbEscludere.getItems().contains(città1.getNome()) && !cmbEscludere.getItems().contains(città2.getNome())) {
-    	    		    	cmbEscludere.getItems().add(città2.getNome());
-    	    		    }else if (!cmbEscludere.getItems().contains(città1.getNome()) && cmbEscludere.getItems().contains(città2.getNome())) {
-    	    		    	cmbEscludere.getItems().add(città1.getNome());
-    	    		    }
+	    		
+	    		for (DefaultEdge arco : migliorItinerario) {
+	    		    Città cittàSource = grafo.getEdgeSource(arco);
+	    		    Città cittàTarget = grafo.getEdgeTarget(arco);
+
+	    		    // Aggiungi città all set in modo ordinato
+	    		    if (itinerario.isEmpty()) {
+	    		    	if(cittàSource.getNome().equals(cittàPartenza.getNome())) {
+	    		    		itinerario.add(cittàSource.getNome());
+	    		    		itinerario.add(cittàTarget.getNome());
+	    		    	}else {
+	    		    		itinerario.add(cittàTarget.getNome());
+	    		    		itinerario.add(cittàSource.getNome());
+	    		    	}
+	    		      
+	    		    } else {
+	    		    	String ultimoInserito = itinerario.get(itinerario.size() - 1);
+	    		        if (ultimoInserito.equals(cittàSource.getNome())) {
+	    		            itinerario.add(cittàTarget.getNome());
+	    		        } else {
+	    		            itinerario.add(cittàSource.getNome());
+	    		        }
 	    		    }
-    
-    	    	}
+
+	    		    // Aggiunge le città alla ComboBox solo se non sono già presenti
+	    		    if (!cmbEscludere.getItems().contains(cittàSource.getNome()) && !cmbEscludere.getItems().contains(cittàTarget.getNome())) {
+	    		        cmbEscludere.getItems().add(cittàSource.getNome());
+	    		        cmbEscludere.getItems().add(cittàTarget.getNome());
+	    		    } else if (cmbEscludere.getItems().contains(cittàSource.getNome()) && !cmbEscludere.getItems().contains(cittàTarget.getNome())) {
+	    		        cmbEscludere.getItems().add(cittàTarget.getNome());
+	    		    } else if (!cmbEscludere.getItems().contains(cittàSource.getNome()) && cmbEscludere.getItems().contains(cittàTarget.getNome())) {
+	    		        cmbEscludere.getItems().add(cittàSource.getNome());
+	    		    }
+	    		}
+
+	    		// Costruisci la stringa dell'itinerario
+	    		String itinerarioStringa = String.join(" -> ", itinerario);
+
+	    		// Aggiungi la stringa all'area di testo
+	    		this.txtRisultato2.appendText(itinerarioStringa + "\n");
+
+
+
+
+
+
 
 	    	}else {  
 	    		
