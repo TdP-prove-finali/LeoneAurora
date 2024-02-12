@@ -3,7 +3,6 @@ package itinerario_italia;
 import java.net.URL;
 
 import org.jgrapht.Graph;
-import org.jgrapht.Graphs;
 import org.jgrapht.graph.DefaultEdge;
 
 import java.util.*;
@@ -35,6 +34,8 @@ public class FXMLController {
 	private double budget;
 	private double tempoFinaleM;
 	private List<String> itinerario;
+	private double costoTot;
+	private String durataTotIti;
 
     @FXML // ResourceBundle that was given to the FXMLLoader
     private ResourceBundle resources;
@@ -261,6 +262,7 @@ public class FXMLController {
  	
                             	    grafo = model.creaGrafo(listaVertici, budget, tempoFinaleM, cittàPartenza);
                             	    itinerario = new ArrayList<>();
+                            	    
                             	    if (model.getNVertici(grafo)>0 && model.getNArchi(grafo)>0) {
                             	    	this.txtRisultato2.setText("Grafo creato con "+ model.getNVertici(grafo)+ "vertici e " + model.getNArchi(grafo)+"archi\n" );
                             	    	cmbEscludere.setDisable(false);
@@ -286,6 +288,12 @@ public class FXMLController {
 
                             	    		// Aggiungi la stringa all'area di testo
                             	    		this.txtRisultato2.appendText(itinerarioStringa + "\n");
+                            	    		List<DefaultEdge> arcoUnico = new ArrayList<>(grafo.edgeSet());
+                            	    		costoTot= this.model.calcolaCostoItinerario(arcoUnico);
+                            	    		
+                            	    		this.txtRisultato2.appendText("Costo totale: "+costoTot+"\n");
+                            	    		
+                            	    		this.txtRisultato2.appendText("Durata complessiva degli spostamenti: "+model.calcolaDurataTotale(arcoUnico));
                             	    		
                             	    	}else {
                             	    		
@@ -316,15 +324,18 @@ public class FXMLController {
                                 	    		        }
                                 	    		    }
 
-                                	    		    // Aggiunge le città alla ComboBox solo se non sono già presenti
-                                	    		    if (!cmbEscludere.getItems().contains(cittàSource.getNome()) && !cmbEscludere.getItems().contains(cittàTarget.getNome())) {
-                                	    		        cmbEscludere.getItems().add(cittàSource.getNome());
-                                	    		        cmbEscludere.getItems().add(cittàTarget.getNome());
-                                	    		    } else if (cmbEscludere.getItems().contains(cittàSource.getNome()) && !cmbEscludere.getItems().contains(cittàTarget.getNome())) {
-                                	    		        cmbEscludere.getItems().add(cittàTarget.getNome());
-                                	    		    } else if (!cmbEscludere.getItems().contains(cittàSource.getNome()) && cmbEscludere.getItems().contains(cittàTarget.getNome())) {
-                                	    		        cmbEscludere.getItems().add(cittàSource.getNome());
+                                	    		    if (!cittàSource.getNome().equals(cittàPartenza.getNome()) && !cittàTarget.getNome().equals(cittàPartenza.getNome())) {
+                                	    		    	// Aggiunge le città alla ComboBox solo se non sono già presenti
+                                    	    		    if (!cmbEscludere.getItems().contains(cittàSource.getNome()) && !cmbEscludere.getItems().contains(cittàTarget.getNome())) {
+                                    	    		        cmbEscludere.getItems().add(cittàSource.getNome());
+                                    	    		        cmbEscludere.getItems().add(cittàTarget.getNome());
+                                    	    		    } else if (cmbEscludere.getItems().contains(cittàSource.getNome()) && !cmbEscludere.getItems().contains(cittàTarget.getNome())) {
+                                    	    		        cmbEscludere.getItems().add(cittàTarget.getNome());
+                                    	    		    } else if (!cmbEscludere.getItems().contains(cittàSource.getNome()) && cmbEscludere.getItems().contains(cittàTarget.getNome())) {
+                                    	    		        cmbEscludere.getItems().add(cittàSource.getNome());
+                                    	    		    }
                                 	    		    }
+                                	    		    
                                 	    		}
 
                                 	    		// Costruisci la stringa dell'itinerario
@@ -332,6 +343,12 @@ public class FXMLController {
 
                                 	    		// Aggiungi la stringa all'area di testo
                                 	    		this.txtRisultato2.appendText(itinerarioStringa + "\n");
+                                	    		
+                                	    		costoTot= this.model.calcolaCostoItinerario(migliorItinerario);
+                                	    		
+                                	    		this.txtRisultato2.appendText("Costo totale: "+costoTot+"\n");
+                                	    		this.txtRisultato2.appendText("Durata complessiva degli spostamenti: "+model.calcolaDurataTotale(migliorItinerario));
+
 
 
 
@@ -569,6 +586,15 @@ public class FXMLController {
 
     		// Aggiungi la stringa all'area di testo
     		this.txtRisultato2.appendText(itinerarioStringa + "\n");
+    		List<DefaultEdge> arcoUnico = new ArrayList<>(grafo.edgeSet());
+    		costoTot= this.model.calcolaCostoItinerario(arcoUnico);
+    		
+    		this.txtRisultato2.appendText("Costo totale: "+costoTot+"\n");
+    		this.txtRisultato2.appendText("Durata complessiva degli spostamenti: "+model.calcolaDurataTotale(arcoUnico));
+    		
+    		this.cmbEscludere.setDisable(true);
+    		this.btnInviaEscludere.setDisable(true);
+    		this.btnRicalcola.setDisable(true);
     	}else {
     		
     		this.cmbEscludere.getItems().clear();
@@ -598,14 +624,16 @@ public class FXMLController {
 	    		        }
 	    		    }
 
-	    		    // Aggiunge le città alla ComboBox solo se non sono già presenti
-	    		    if (!cmbEscludere.getItems().contains(cittàSource.getNome()) && !cmbEscludere.getItems().contains(cittàTarget.getNome())) {
-	    		        cmbEscludere.getItems().add(cittàSource.getNome());
-	    		        cmbEscludere.getItems().add(cittàTarget.getNome());
-	    		    } else if (cmbEscludere.getItems().contains(cittàSource.getNome()) && !cmbEscludere.getItems().contains(cittàTarget.getNome())) {
-	    		        cmbEscludere.getItems().add(cittàTarget.getNome());
-	    		    } else if (!cmbEscludere.getItems().contains(cittàSource.getNome()) && cmbEscludere.getItems().contains(cittàTarget.getNome())) {
-	    		        cmbEscludere.getItems().add(cittàSource.getNome());
+	    		    if (!cittàSource.getNome().equals(cittàPartenza.getNome()) && !cittàTarget.getNome().equals(cittàPartenza.getNome())) {
+	    		    	// Aggiunge le città alla ComboBox solo se non sono già presenti
+    	    		    if (!cmbEscludere.getItems().contains(cittàSource.getNome()) && !cmbEscludere.getItems().contains(cittàTarget.getNome())) {
+    	    		        cmbEscludere.getItems().add(cittàSource.getNome());
+    	    		        cmbEscludere.getItems().add(cittàTarget.getNome());
+    	    		    } else if (cmbEscludere.getItems().contains(cittàSource.getNome()) && !cmbEscludere.getItems().contains(cittàTarget.getNome())) {
+    	    		        cmbEscludere.getItems().add(cittàTarget.getNome());
+    	    		    } else if (!cmbEscludere.getItems().contains(cittàSource.getNome()) && cmbEscludere.getItems().contains(cittàTarget.getNome())) {
+    	    		        cmbEscludere.getItems().add(cittàSource.getNome());
+    	    		    }
 	    		    }
 	    		}
 
@@ -614,6 +642,11 @@ public class FXMLController {
 
 	    		// Aggiungi la stringa all'area di testo
 	    		this.txtRisultato2.appendText(itinerarioStringa + "\n");
+	    		
+	    		costoTot= this.model.calcolaCostoItinerario(migliorItinerario);
+	    		
+	    		this.txtRisultato2.appendText("Costo totale: "+costoTot+"\n");
+	    		this.txtRisultato2.appendText("Durata complessiva degli spostamenti: "+model.calcolaDurataTotale(migliorItinerario));
 
 
 

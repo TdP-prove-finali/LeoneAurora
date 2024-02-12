@@ -115,8 +115,6 @@ public class Model {
 	
 	public Graph<Città, DefaultEdge> creaGrafo(List<Città> vertici, double budget, double durataTot, Città partenzaScelta) {
 	    grafo = new SimpleGraph<>(DefaultEdge.class);
-
-	    System.out.println("Vertici nel grafo prima dell'aggiunta: " + vertici);
 	    pesoMap = new HashMap<>();
 	    grafo.addVertex(partenzaScelta);
 
@@ -172,7 +170,7 @@ public class Model {
 	                }
 	            });
 
-	    System.out.println("Vertici nel grafo dopo l'aggiunta: " + grafo.vertexSet());
+	   
 	    return grafo;
 	}
 
@@ -197,16 +195,6 @@ public class Model {
         // Mappa per la memoizzazione
         Map<Pair<Città, Pair<Double, Double>>, Set<List<DefaultEdge>>> memo = new HashMap<>();
         
-        //DA CONTROLLARE
-        /*if (cittàDisponibili.size() == 1) {
-            Città[] cittàArray = cittàDisponibili.toArray(new Città[1]);
-            Città destinazione = cittàArray[0];
-            migliorItinerario.add(grafo.getEdge(cittàPartenza, destinazione));
-            migliorItinerario.add(grafo.getEdge(cittàPartenza, destinazione));
-        } else {
-        	cercaItinerarioOttimale(grafo, cittàPartenza, cittàPartenza, itinerarioParziale, migliorItinerario, cittàDisponibili, budget, durataMassima, memo, permanenza);
-
-        }*/
         cercaItinerarioOttimale(grafo, cittàPartenza, cittàPartenza, itinerarioParziale, migliorItinerario, cittàDisponibili, budget, durataMassima, memo, permanenza);
         return migliorItinerario;
     }
@@ -298,6 +286,36 @@ public class Model {
         // Verifica se gli itinerari sono uguali o una permutazione l'uno dell'altro
         return itinerario1.containsAll(itinerario2) && itinerario2.containsAll(itinerario1);
     }
+    
+ // Aggiungi questa funzione alla tua classe
+    public double calcolaCostoItinerario(List<DefaultEdge> itinerario) {
+        double costoTotale = 0.0;
+
+        for (DefaultEdge arco : itinerario) {
+            PesoArco peso = pesoMap.get(arco);
+            costoTotale += peso.getCostoTot();
+        }
+
+        return Math.round(costoTotale);
+    }
+    
+    // Metodo ausiliario per calcolare la durata totale dell'itinerario in ore e minuti
+    public String calcolaDurataTotale(List<DefaultEdge> itinerario) {
+        double durataTotaleMinuti = itinerario.stream()
+                .mapToDouble(arco -> pesoMap.get(arco).getDurata())
+                .sum();
+
+        // Calcola le ore e i minuti
+        int ore = (int) (durataTotaleMinuti / 60);
+        int minuti = (int) (durataTotaleMinuti % 60);
+
+        return String.format("%d ore e %d minuti", ore, minuti);
+    }
+
+
+
+
+
 
 
 }
