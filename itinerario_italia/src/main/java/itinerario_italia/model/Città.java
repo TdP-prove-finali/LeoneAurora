@@ -68,10 +68,16 @@ public class Città implements Comparable<Città>  {
 		this.capoluogo = capoluogo;
 	}
 
-	@Override
+	/*@Override
 	public String toString() {
 		return "Città [id=" + id + ", nome=" + nome + ", regione=" + regione + ", zona=" + zona + ", tipologia="
 				+ tipologia + ", capoluogo=" + capoluogo + "]";
+	}*/
+	
+	
+	@Override
+	public String toString() {
+		return nome;
 	}
 
 	@Override

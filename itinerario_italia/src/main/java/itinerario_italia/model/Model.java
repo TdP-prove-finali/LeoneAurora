@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 
 import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
-import org.jgrapht.alg.util.Pair;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 
@@ -113,7 +112,7 @@ public class Model {
 	}
 
 	
-	public Graph<Città, DefaultEdge> creaGrafo(List<Città> vertici, double budget, double durataTot, Città partenzaScelta) {
+	public Graph<Città, DefaultEdge> creaGrafo(List<Città> vertici, double budget, double durataTot, Città partenzaScelta, double permanenza) {
 	    grafo = new SimpleGraph<>(DefaultEdge.class);
 	    pesoMap = new HashMap<>();
 	    grafo.addVertex(partenzaScelta);
@@ -136,12 +135,14 @@ public class Model {
 	                if (costoTot <= budget && pesoArco.getDurata() <= durataTot) {
 	                    if (cittàPartenza.equals(partenzaScelta)) {
 	                        double costoDoppio = costoTot * 2;
-	                        if (costoDoppio <= budget) {
+	                        double durataCompl = (pesoArco.getDurata()*2)+permanenza;
+	                        if (costoDoppio <= budget && durataCompl<= durataTot) {
 	                            verticiDaAggiungere.add(cittàArrivo);
 	                        }
 	                    } else if (cittàArrivo.equals(partenzaScelta)) {
 	                        double costoDoppio = costoTot * 2;
-	                        if (costoDoppio <= budget) {
+	                        double durataCompl = (pesoArco.getDurata()*2)+permanenza;
+	                        if (costoDoppio <= budget && durataCompl<= durataTot) {
 	                            verticiDaAggiungere.add(cittàPartenza);
 	                        }
 	                    }
@@ -176,7 +177,6 @@ public class Model {
 
 
 
-
     
     public int getNVertici (Graph<Città, DefaultEdge> grafo) {
     	return grafo.vertexSet().size(); 
@@ -186,135 +186,155 @@ public class Model {
     	return grafo.edgeSet().size(); 
     }
 
-
+ 
     public List<DefaultEdge> trovaItinerarioOttimale(Graph<Città, DefaultEdge> grafo, Città cittàPartenza, double budget, double durataMassima, double permanenza) {
         List<DefaultEdge> migliorItinerario = new ArrayList<>();
         List<DefaultEdge> itinerarioParziale = new ArrayList<>();
         Set<Città> cittàDisponibili = new HashSet<>(grafo.vertexSet());
+        int numeroMax = (int) ((durataMassima / permanenza));
+        if (numeroMax > cittàDisponibili.size()) {
+            numeroMax = (cittàDisponibili.size()+1);
+        }
 
-        // Mappa per la memoizzazione
-        Map<Pair<Città, Pair<Double, Double>>, Set<List<DefaultEdge>>> memo = new HashMap<>();
+        System.out.println(cittàDisponibili);
         
-        cercaItinerarioOttimale(grafo, cittàPartenza, cittàPartenza, itinerarioParziale, migliorItinerario, cittàDisponibili, budget, durataMassima, memo, permanenza);
+        cercaItinerarioOttimale(0, numeroMax, grafo, cittàPartenza, cittàPartenza, itinerarioParziale, migliorItinerario, cittàDisponibili, budget, durataMassima, permanenza);
+
         return migliorItinerario;
     }
 
-    private void cercaItinerarioOttimale(Graph<Città, DefaultEdge> grafo, Città cittàPartenza, Città cittàCorrente,
-            List<DefaultEdge> itinerarioParziale, List<DefaultEdge> migliorItinerario,
-            Set<Città> cittàDisponibili, double budget, double durataMassima, Map<Pair<Città, Pair<Double, Double>>, Set<List<DefaultEdge>>> memo, double permanenza) {
+    private void cercaItinerarioOttimale(int livello, int numeroMax, Graph<Città, DefaultEdge> grafo, Città cittàPartenza, Città cittàCorrente,
+                                          List<DefaultEdge> itinerarioParziale, List<DefaultEdge> migliorItinerario,
+                                          Set<Città> cittàDisponibili, double budget, double durataMassima, double permanenza) {
 
-    	Pair<Città, Pair<Double, Double>> memoKey = new Pair<>(cittàCorrente, new Pair<>(budget, durataMassima));
+    	if (itinerarioParziale.size() == numeroMax) {
+    	    double costoMigliorItinerario = calcolaCostoItinerario(migliorItinerario);
+    	    double costoItinerarioParziale = calcolaCostoItinerario(itinerarioParziale);
+
+    	    if (isCityInFirstAndLastEdges(itinerarioParziale, cittàPartenza) && costoMigliorItinerario > costoItinerarioParziale) {
+    	        migliorItinerario.clear();
+    	        migliorItinerario.addAll(itinerarioParziale);
+    	        
+    	    }
+    	    
+    	}
 
 
-    	// Verifica se la combinazione di parametri è già stata calcolata
-        if (memo.containsKey(memoKey)) {
-            Set<List<DefaultEdge>> cachedResults = memo.get(memoKey);
-            // Verifica se l'itinerarioParziale o una sua permutazione è già presente
-            if (contienePermutazioneEquivalenti(cachedResults, itinerarioParziale)) {
-                return;
-            }
-            // Aggiungi l'itinerarioParziale alla memoizzazione
-            cachedResults.add(new ArrayList<>(itinerarioParziale));
-        } else {
-            // Se la chiave non è presente nella memo, crea una nuova entry
-            Set<List<DefaultEdge>> itinerariMemo = new HashSet<>();
-            itinerariMemo.add(new ArrayList<>(itinerarioParziale));
-            memo.put(memoKey, itinerariMemo);
-        }
-
+        if (livello >= numeroMax ) {
+            return;
+        }	
+        
 
         // Controllo di destinazione: verifica se l'itinerario è completo e se l'ultimo arco ritorna alla città di partenza
-        if (itinerarioParziale.size() > migliorItinerario.size() &&
-            (grafo.getEdgeTarget(itinerarioParziale.get(itinerarioParziale.size() - 1)).equals(cittàPartenza)|| 
-            grafo.getEdgeSource(itinerarioParziale.get(itinerarioParziale.size() - 1)).equals(cittàPartenza))) {
-
-            migliorItinerario.clear();
+        if (itinerarioParziale.size() > migliorItinerario.size() && itinerarioParziale.size() <= numeroMax) {
+        	if ( isCityInFirstAndLastEdges(itinerarioParziale, cittàPartenza)) {
+        		migliorItinerario.clear();
             migliorItinerario.addAll(itinerarioParziale);
-            return;
+        	}
         }
+                
         
-        
+
         List<DefaultEdge> archiOrdinati = grafo.edgesOf(cittàCorrente).stream()
                 .filter(arco -> cittàDisponibili.contains(Graphs.getOppositeVertex(grafo, arco, cittàCorrente)))
                 .sorted(Comparator.comparingDouble(arco -> pesoMap.get(arco).getCostoTot()))
                 .collect(Collectors.toList());
 
+        
+        
         for (DefaultEdge arco : archiOrdinati) {
             Città cittàDestinazione = Graphs.getOppositeVertex(grafo, arco, cittàCorrente);
 
-
-            if (cittàDisponibili.contains(cittàDestinazione)) {
-                PesoArco peso = pesoMap.get(arco);
-                double costoArco = peso.getCostoTot();
-                double durataArco = peso.getDurata() + permanenza;
-
-                // Verifica se l'aggiunta dell'arco rispetta i vincoli di budget e durata
-                if (costoArco <= budget && durataArco <= durataMassima ) {
-                    // Aggiorna i valori di budget e durata
-                    double nuovoBudget = budget - costoArco;
-                    double nuovaDurataMassima = durataMassima - durataArco;
-                    
-
-                    // Aggiungi l'arco al percorso parziale
-                    itinerarioParziale.add(arco);
-                    cittàDisponibili.remove(cittàDestinazione);
-
-                    // Chiamata ricorsiva per la città di destinazione
-                    cercaItinerarioOttimale(grafo, cittàPartenza, cittàDestinazione, itinerarioParziale, migliorItinerario, cittàDisponibili,
-                            nuovoBudget, nuovaDurataMassima, memo, permanenza);
-
-                    // Rimuovi l'arco dall'itinerario parziale e dalle città disponibili
-                    itinerarioParziale.remove(arco);
-                    cittàDisponibili.add(cittàDestinazione);
-                }
-            }
-        }
-    }
-
-
- // Metodo ausiliario per verificare se l'insieme contiene una permutazione equivalente
-    private boolean contienePermutazioneEquivalenti(Set<List<DefaultEdge>> itinerari, List<DefaultEdge> itinerarioParziale) {
-        return itinerari.stream().anyMatch(it -> sonoEquivalenti(it, itinerarioParziale));
-    }
-
-    // Metodo ausiliario per verificare se due itinerari sono equivalenti o permutazioni l'uno dell'altro
-    private boolean sonoEquivalenti(List<DefaultEdge> itinerario1, List<DefaultEdge> itinerario2) {
-        // Verifica se gli itinerari hanno la stessa dimensione
-        if (itinerario1.size() != itinerario2.size()) {
-            return false;
-        }
-        // Verifica se gli itinerari sono uguali o una permutazione l'uno dell'altro
-        return itinerario1.containsAll(itinerario2) && itinerario2.containsAll(itinerario1);
-    }
-    
- // Aggiungi questa funzione alla tua classe
-    public double calcolaCostoItinerario(List<DefaultEdge> itinerario) {
-        double costoTotale = 0.0;
-
-        for (DefaultEdge arco : itinerario) {
             PesoArco peso = pesoMap.get(arco);
-            costoTotale += peso.getCostoTot();
+            double costoArco = peso.getCostoTot();
+            double durataArco = peso.getDurata() + permanenza;
+
+            // Verifica se l'aggiunta dell'arco rispetta i vincoli di budget e durata
+            if (costoArco <= budget && durataArco <= durataMassima) {
+                // Aggiorna i valori di budget e durata
+                double nuovoBudget = budget - costoArco;
+                double nuovaDurataMassima = durataMassima - durataArco;
+
+                
+                System.out.println("Citta dispo: "+cittàDisponibili);
+                System.out.println(cittàCorrente);
+                System.out.println(cittàDisponibili);
+                
+                // Aggiungi l'arco al percorso parziale
+                itinerarioParziale.add(arco);
+                cittàDisponibili.remove(cittàDestinazione);
+                
+                System.out.println("Citta dispo rimove: "+cittàDisponibili);
+                System.out.println(cittàCorrente);
+
+                // Chiamata ricorsiva per la città di destinazione
+                cercaItinerarioOttimale(livello+1, numeroMax, grafo, cittàPartenza, cittàDestinazione, itinerarioParziale, migliorItinerario, cittàDisponibili,
+                        nuovoBudget, nuovaDurataMassima, permanenza);
+
+
+
+                
+             // Rimuovi l'arco dall'itinerario parziale e dalle città disponibili
+                itinerarioParziale.remove(arco);
+                cittàDisponibili.add(cittàDestinazione);
+                
+
+            }
+        } 
+    }
+
+
+    private boolean isCityInFirstAndLastEdges(List<DefaultEdge> itinerario, Città cittàPartenza) {
+        long count = itinerario.stream()
+                .filter(arco -> grafo.getEdgeSource(arco).equals(cittàPartenza) || grafo.getEdgeTarget(arco).equals(cittàPartenza))
+                .count();
+
+        if (count == 2) {
+            // Verifica se la città compare come primo e ultimo arco
+            DefaultEdge primoArco = itinerario.get(0);
+            DefaultEdge ultimoArco = itinerario.get(itinerario.size() - 1);
+
+            return (grafo.getEdgeSource(primoArco).equals(cittàPartenza) || grafo.getEdgeTarget(primoArco).equals(cittàPartenza)) &&
+                   (grafo.getEdgeSource(ultimoArco).equals(cittàPartenza) || grafo.getEdgeTarget(ultimoArco).equals(cittàPartenza));
         }
 
-        return Math.round(costoTotale);
+        return false;
     }
+
+
+ 
+    
+	public double calcolaCostoItinerario(List<DefaultEdge> itinerario) {
+	    double costoTotale = 0.0;
+
+	    for (DefaultEdge arco : itinerario) {
+	        PesoArco peso = pesoMap.get(arco);
+	        costoTotale += peso.getCostoTot();
+	    }
+
+	    return costoTotale;
+	}
+
     
     // Metodo ausiliario per calcolare la durata totale dell'itinerario in ore e minuti
     public String calcolaDurataTotale(List<DefaultEdge> itinerario) {
         double durataTotaleMinuti = itinerario.stream()
                 .mapToDouble(arco -> pesoMap.get(arco).getDurata())
                 .sum();
-
-        // Calcola le ore e i minuti
-        int ore = (int) (durataTotaleMinuti / 60);
-        int minuti = (int) (durataTotaleMinuti % 60);
+        
+    	// Calcola le ore e i minuti
+	    int ore = (int) (durataTotaleMinuti / 60);
+	    int minuti = (int) (durataTotaleMinuti % 60);
+	    
+        if (itinerario.size()==1) {
+        	// Calcola le ore e i minuti
+            ore = (int) ((durataTotaleMinuti*2)/ 60);
+            minuti = (int) ((durataTotaleMinuti*2) % 60);
+        }
+        
 
         return String.format("%d ore e %d minuti", ore, minuti);
     }
-
-
-
-
 
 
 

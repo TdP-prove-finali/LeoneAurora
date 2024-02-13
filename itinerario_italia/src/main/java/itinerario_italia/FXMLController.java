@@ -35,7 +35,7 @@ public class FXMLController {
 	private double tempoFinaleM;
 	private List<String> itinerario;
 	private double costoTot;
-	private String durataTotIti;
+
 
     @FXML // ResourceBundle that was given to the FXMLLoader
     private ResourceBundle resources;
@@ -260,7 +260,7 @@ public class FXMLController {
                                     	
                                     }
  	
-                            	    grafo = model.creaGrafo(listaVertici, budget, tempoFinaleM, cittàPartenza);
+                            	    grafo = model.creaGrafo(listaVertici, budget, tempoFinaleM, cittàPartenza,permanenzaValore);
                             	    itinerario = new ArrayList<>();
                             	    
                             	    if (model.getNVertici(grafo)>0 && model.getNArchi(grafo)>0) {
@@ -334,6 +334,12 @@ public class FXMLController {
                                     	    		    } else if (!cmbEscludere.getItems().contains(cittàSource.getNome()) && cmbEscludere.getItems().contains(cittàTarget.getNome())) {
                                     	    		        cmbEscludere.getItems().add(cittàSource.getNome());
                                     	    		    }
+                                	    		    } else {
+                                	    		    	if(cittàSource.getNome().equals(cittàPartenza.getNome())) {
+                                	    		    		cmbEscludere.getItems().add(cittàTarget.getNome());
+                                	    		    	} else if(cittàTarget.getNome().equals(cittàPartenza.getNome())){
+                                	    		    		cmbEscludere.getItems().add(cittàSource.getNome());
+                                	    		    	}
                                 	    		    }
                                 	    		    
                                 	    		}
@@ -587,7 +593,7 @@ public class FXMLController {
     		// Aggiungi la stringa all'area di testo
     		this.txtRisultato2.appendText(itinerarioStringa + "\n");
     		List<DefaultEdge> arcoUnico = new ArrayList<>(grafo.edgeSet());
-    		costoTot= this.model.calcolaCostoItinerario(arcoUnico);
+    		costoTot= this.model.calcolaCostoItinerario(arcoUnico)*2;
     		
     		this.txtRisultato2.appendText("Costo totale: "+costoTot+"\n");
     		this.txtRisultato2.appendText("Durata complessiva degli spostamenti: "+model.calcolaDurataTotale(arcoUnico));
@@ -634,6 +640,12 @@ public class FXMLController {
     	    		    } else if (!cmbEscludere.getItems().contains(cittàSource.getNome()) && cmbEscludere.getItems().contains(cittàTarget.getNome())) {
     	    		        cmbEscludere.getItems().add(cittàSource.getNome());
     	    		    }
+	    		    }else {
+	    		    	if(cittàSource.getNome().equals(cittàPartenza.getNome()) && !cmbEscludere.getItems().contains(cittàTarget.getNome()) ) {
+	    		    		cmbEscludere.getItems().add(cittàTarget.getNome());
+	    		    	} else if(cittàTarget.getNome().equals(cittàPartenza.getNome()) && !cmbEscludere.getItems().contains(cittàSource.getNome())){
+	    		    		cmbEscludere.getItems().add(cittàSource.getNome());
+	    		    	}
 	    		    }
 	    		}
 
