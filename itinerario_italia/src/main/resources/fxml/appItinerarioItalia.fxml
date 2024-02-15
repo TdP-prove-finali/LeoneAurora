@@ -19,11 +19,11 @@
 
 
 <GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="itinerario_italia.FXMLController">
-   <columnConstraints>
-      <ColumnConstraints hgrow="SOMETIMES" maxWidth="368.0" minWidth="10.0" prefWidth="246.0" />
-      <ColumnConstraints hgrow="SOMETIMES" maxWidth="482.0" minWidth="10.0" prefWidth="479.0" />
-      <ColumnConstraints hgrow="SOMETIMES" maxWidth="356.242919921875" minWidth="10.0" prefWidth="242.5" />
-      <ColumnConstraints hgrow="SOMETIMES" maxWidth="323.0" minWidth="10.0" prefWidth="280.8397216796875" />
+	<columnConstraints>
+      <ColumnConstraints hgrow="SOMETIMES" maxWidth="466.4247131347656" minWidth="10.0" prefWidth="395.3661193847656" />
+      <ColumnConstraints hgrow="SOMETIMES" maxWidth="612.5333251953125" minWidth="10.0" prefWidth="602.401611328125" />
+      <ColumnConstraints hgrow="SOMETIMES" maxWidth="607.006103515625" minWidth="10.0" prefWidth="212.3779296875" />
+      <ColumnConstraints hgrow="SOMETIMES" maxWidth="703.394775390625" minWidth="10.0" prefWidth="431.6220703125" />
    </columnConstraints>
    <rowConstraints>
       <RowConstraints maxHeight="127.0" minHeight="3.0" prefHeight="59.0" vgrow="SOMETIMES" />
@@ -49,7 +49,11 @@
             <Font name="Georgia" size="16.0" />
          </font>
       </Label>
-      <ComboBox fx:id="cmbCittà" prefHeight="26.0" prefWidth="208.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+      <ComboBox fx:id="cmbCittà" prefHeight="26.0" prefWidth="208.0" GridPane.rowIndex="1">
+         <GridPane.margin>
+            <Insets left="200.0" />
+         </GridPane.margin>
+      </ComboBox>
       <Label text="Città di partenza" textFill="#0a8ada" GridPane.rowIndex="1">
          <GridPane.margin>
             <Insets left="10.0" />
@@ -66,7 +70,11 @@
             <Font name="System Bold Italic" size="15.0" />
          </font>
       </Label>
-      <TextField fx:id="txtBudget" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+      <TextField fx:id="txtBudget" GridPane.rowIndex="2">
+         <GridPane.margin>
+            <Insets left="200.0" />
+         </GridPane.margin>
+      </TextField>
       <Label text="Tempo di permanenza di ogni città" textFill="#0a8ada" GridPane.rowIndex="6">
          <GridPane.margin>
             <Insets left="10.0" />
@@ -75,7 +83,11 @@
             <Font size="15.0" />
          </font>
       </Label>
-      <DatePicker fx:id="dataPartenza" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+      <DatePicker fx:id="dataPartenza" prefHeight="26.0" prefWidth="186.0" GridPane.rowIndex="3">
+         <GridPane.margin>
+            <Insets left="200.0" />
+         </GridPane.margin>
+      </DatePicker>
       <Label text="Data di partenza" textFill="#0a8ada" GridPane.rowIndex="3">
          <GridPane.margin>
             <Insets left="10.0" />
@@ -156,7 +168,7 @@
             <Font size="14.0" />
          </font>
       </Button>
-      <Button fx:id="btnRicalcola" layoutX="60.0" layoutY="453.0" mnemonicParsing="false" onAction="#ricalcola" text="RICALCOLA ITINERARIO " textFill="#0a8ada" GridPane.columnIndex="2" GridPane.rowIndex="12">
+      <Button fx:id="btnRicalcola" layoutX="60.0" layoutY="453.0" mnemonicParsing="false" onAction="#ricalcola" text="RICALCOLA ITINERARIO " textFill="#0a8ada" GridPane.columnIndex="3" GridPane.rowIndex="12">
          <GridPane.margin>
             <Insets left="50.0" />
          </GridPane.margin>
@@ -173,7 +185,11 @@
             <Font size="15.0" />
          </font>
       </Label>
-      <Slider fx:id="orario" prefHeight="16.0" prefWidth="315.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+      <Slider fx:id="orario" prefHeight="16.0" prefWidth="315.0" GridPane.columnIndex="1" GridPane.rowIndex="4">
+         <GridPane.margin>
+            <Insets />
+         </GridPane.margin>
+      </Slider>
       <Text fill="#2d98eb" strokeLineCap="ROUND" strokeWidth="0.0" text="CREA IL TUO VIAGGIO IN GIRO PER L'ITALIA" textAlignment="CENTER" wrappingWidth="611.1865234375">
          <font>
             <Font size="27.0" />
@@ -185,13 +201,12 @@
             <Insets right="10.0" />
          </GridPane.margin>
       </Text>
-      <TextArea fx:id="txtRisultato4" editable="false" layoutX="750.0" layoutY="640.0" prefHeight="259.0" prefWidth="484.0" GridPane.columnIndex="3" GridPane.rowIndex="11" />
       <Button fx:id="btnConfermaCittà" layoutX="472.0" layoutY="362.0" mnemonicParsing="false" onAction="#confermaCittà" prefHeight="27.0" prefWidth="104.0" text="Conferma" textFill="#0a8ada" GridPane.columnIndex="1" GridPane.rowIndex="1">
          <font>
             <Font size="14.0" />
          </font>
          <GridPane.margin>
-            <Insets left="260.0" />
+            <Insets left="30.0" />
          </GridPane.margin>
       </Button>
       <Label layoutX="20.0" layoutY="384.0" prefHeight="19.0" prefWidth="147.0" text="Filtri opzionali: " textFill="#0a8ada" GridPane.rowIndex="7">
@@ -203,24 +218,28 @@
          </GridPane.margin>
       </Label>
       <ComboBox fx:id="cmbFiltri" disable="true" onAction="#sbloccaFiltri" prefHeight="26.0" prefWidth="176.0" promptText="Sblocca filtri" GridPane.columnIndex="1" GridPane.rowIndex="7" />
-      <Label layoutX="20.0" layoutY="164.0" text="Data di ritorno" textFill="#0a8ada" GridPane.columnIndex="2" GridPane.rowIndex="3">
+      <Label layoutX="20.0" layoutY="164.0" text="Data di ritorno" textFill="#0a8ada" GridPane.columnIndex="1" GridPane.rowIndex="3">
          <font>
             <Font size="15.0" />
          </font>
          <GridPane.margin>
-            <Insets left="10.0" />
+            <Insets left="50.0" />
          </GridPane.margin>
       </Label>
-      <DatePicker fx:id="dataRitorno" layoutX="272.0" layoutY="160.0" GridPane.columnIndex="3" GridPane.rowIndex="3" />
+      <DatePicker fx:id="dataRitorno" layoutX="272.0" layoutY="160.0" GridPane.columnIndex="1" GridPane.rowIndex="3">
+         <GridPane.margin>
+            <Insets left="220.0" />
+         </GridPane.margin>
+      </DatePicker>
       <Slider fx:id="permanenza" layoutX="272.0" layoutY="300.0" prefHeight="16.0" prefWidth="315.0" GridPane.columnIndex="1" GridPane.rowIndex="6" />
       <TextField fx:id="txtPermanenza" layoutX="266.0" layoutY="110.0" GridPane.columnIndex="2" GridPane.rowIndex="6">
          <GridPane.margin>
-            <Insets left="20.0" />
+            <Insets left="20.0" right="20.0" />
          </GridPane.margin>
       </TextField>
       <TextField fx:id="txtOrario" layoutX="748.0" layoutY="215.0" GridPane.columnIndex="2" GridPane.rowIndex="4">
          <GridPane.margin>
-            <Insets left="20.0" />
+            <Insets left="20.0" right="20.0" />
          </GridPane.margin>
       </TextField>
       <Label text="Orario di ritorno" textFill="#0a8ada" GridPane.rowIndex="5">
@@ -234,7 +253,7 @@
       <Slider fx:id="orario2" prefHeight="16.0" prefWidth="315.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
       <TextField fx:id="txtOrario2" GridPane.columnIndex="2" GridPane.rowIndex="5">
          <GridPane.margin>
-            <Insets left="20.0" />
+            <Insets left="20.0" right="20.0" />
          </GridPane.margin>
       </TextField>
       <Button fx:id="btnEliminaREg" disable="true" mnemonicParsing="false" onAction="#eliminaReg" text="Elimina" textFill="#0a8ada" GridPane.columnIndex="1" GridPane.rowIndex="8">
@@ -261,7 +280,50 @@
             <Cursor fx:constant="MOVE" />
          </cursor>
       </Button>
+      <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Se vuoi trovare un itinerario ottimale scegliento solo le città da visitare premi qui" GridPane.columnIndex="1" GridPane.rowIndex="1">
+         <GridPane.margin>
+            <Insets left="320.0" />
+         </GridPane.margin>
+         <font>
+            <Font size="12.0" />
+         </font>
+      </Text>
+      <Button fx:id="btnScegliCittà" mnemonicParsing="false" onAction="#scegliCittà" prefHeight="27.0" prefWidth="104.0" text="Scegli città" textFill="#0a8ada" GridPane.columnIndex="3" GridPane.rowIndex="1">
+         <font>
+            <Font size="14.0" />
+         </font>
+         <GridPane.margin>
+            <Insets left="40.0" />
+         </GridPane.margin>
+      </Button>
+      <ComboBox fx:id="cmbScegliCittà" disable="true" prefHeight="26.0" prefWidth="175.0" GridPane.columnIndex="3" GridPane.rowIndex="2">
+         <GridPane.margin>
+            <Insets left="40.0" top="30.0" />
+         </GridPane.margin>
+      </ComboBox>
+      <Button fx:id="btnCittàScelta" disable="true" mnemonicParsing="false" onAction="#inviaCittàScelta" prefHeight="26.0" prefWidth="63.0" text="Invia" textFill="#0a8ada" GridPane.columnIndex="3" GridPane.rowIndex="2">
+         <font>
+            <Font size="14.0" />
+         </font>
+         <GridPane.margin>
+            <Insets left="230.0" top="30.0" />
+         </GridPane.margin>
+      </Button>
+      <Button fx:id="btnEliminaCittàScelta" disable="true" mnemonicParsing="false" onAction="#eliminaCittàScelta" text="Elimina" textFill="#0a8ada" GridPane.columnIndex="3" GridPane.rowIndex="2">
+         <font>
+            <Font size="14.0" />
+         </font>
+         <GridPane.margin>
+            <Insets left="310.0" top="30.0" />
+         </GridPane.margin>
+      </Button>
+      <Text fill="#0a8ada" strokeType="OUTSIDE" strokeWidth="0.0" text="Scegli le città da visitare: " GridPane.columnIndex="3" GridPane.rowIndex="2">
+         <font>
+            <Font size="16.0" />
+         </font>
+         <GridPane.margin>
+            <Insets bottom="40.0" left="40.0" />
+         </GridPane.margin>
+      </Text>
    </children>
 </GridPane>
-
-
