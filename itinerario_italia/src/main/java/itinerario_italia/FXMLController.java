@@ -42,7 +42,7 @@ public class FXMLController {
 	private List<String> itinerario;
 	private double costoTot;
 	private List<String> listaRegioni = new LinkedList<>();
-    	private String zonaScelta = "";
+    private String zonaScelta = "";
 	private boolean modalità =false;
 	private List<Città> listaCittàScelte = new LinkedList<>();
 
@@ -368,8 +368,8 @@ public class FXMLController {
                                 	                Future<List<DefaultEdge>> future = executorService.submit(() -> {
                                 	                    return model.trovaItinerarioOttimale(grafo, cittàPartenza, budget, tempoFinaleM, permanenzaValore);
                                 	                });
-                                	             // Imposta un timeout di 5 secondi
-                                	                List<DefaultEdge> migliorItinerario = future.get(20, TimeUnit.SECONDS);
+                                	             // Imposta un timeout 
+                                	                List<DefaultEdge> migliorItinerario = future.get(40, TimeUnit.SECONDS);
                                 	                if (migliorItinerario.size()>1) {
                                         	    		
                                         	    		for (DefaultEdge arco : migliorItinerario) {
@@ -543,7 +543,7 @@ public class FXMLController {
                     	                    return model.trovaItinerarioOttimale2(grafo, cittàPartenza, permanenzaValore);
                     	                });
                     	             // Imposta un timeout di 5 secondi
-                    	                List<DefaultEdge> migliorItinerario = future.get(20, TimeUnit.SECONDS);
+                    	                List<DefaultEdge> migliorItinerario = future.get(40, TimeUnit.SECONDS);
                     	                if (migliorItinerario.size()>1) {
                             	    		
                             	    		for (DefaultEdge arco : migliorItinerario) {
@@ -837,7 +837,7 @@ public class FXMLController {
                     return model.trovaItinerarioOttimale(grafo, cittàPartenza, budget, tempoFinaleM, permanenzaValore);
                 });
              // Imposta un timeout di 5 secondi
-                List<DefaultEdge> migliorItinerario = future.get(20, TimeUnit.SECONDS);
+                List<DefaultEdge> migliorItinerario = future.get(40, TimeUnit.SECONDS);
                 if (migliorItinerario.size()>1) {
     	    		
     	    		for (DefaultEdge arco : migliorItinerario) {
