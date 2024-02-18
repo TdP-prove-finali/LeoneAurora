@@ -213,7 +213,7 @@ public class Model {
             }
         }
 
-        if (livello >= numeroMax) {
+        if (livello > numeroMax) {
             return;
         }
 
@@ -345,7 +345,7 @@ public class Model {
             }
         }
 
-        if (livello >= numeroMax) {
+        if (livello > numeroMax) {
             return;
         }
 
